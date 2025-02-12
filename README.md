@@ -1,10 +1,7 @@
-# gym_fitness_mobile
+## ⚠️ Important Notice
+If you experience issues with the Impeller render engine, **remove** the following line in `AndroidManifest.xml`:
 
-Impeller render engine has been disabled.
-To enable Impeller render engine again, remove:
-
+```xml
 <meta-data
     android:name="io.flutter.embedding.android.EnableImpeller"
     android:value="false" />
-
-in AndroidManifest.xml
