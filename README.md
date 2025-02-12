@@ -1,5 +1,5 @@
 ## ⚠️ Important Notice
-If you experience issues with the Impeller render engine, **add** the following line in `AndroidManifest.xml` file, under the **<application>** tag:
+If you experience issues with the Impeller render engine, **add** the following line in `AndroidManifest.xml` under the `<application>` tag:
 
 ```xml
 <meta-data
