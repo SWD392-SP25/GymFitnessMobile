@@ -36,7 +36,7 @@ Widget nextButton(int index, PageController controller, BuildContext context) {
               curve: Curves.decelerate
           );
       } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushReplacementNamed(context, AppRoutes.mainScreen);
       }
     },
     child: Container(

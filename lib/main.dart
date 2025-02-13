@@ -147,8 +147,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: AppRoutes.welcome,
-      onGenerateRoute: AppRoutes.generateRoute,
+      initialRoute: AppRoutes.welcome, // Start from the Welcome screen
+      onGenerateRoute: AppRoutes.generateRoute, // Use AppRoutes for routing
+      navigatorKey: GlobalKey<NavigatorState>(), // Optional, for managing global navigation if needed
     );
   }
 }
+
