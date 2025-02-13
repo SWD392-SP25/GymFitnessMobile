@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:gym_fitness_mobile/features/welcome/presentation/widgets/app_shadow.dart';
 import 'package:gym_fitness_mobile/features/welcome/presentation/widgets/text_widgets.dart';
 
+import '../../../../core/navigation/routes.dart';
+
 Widget appOnboardingPage(
     PageController controller,
-    {String imagePath = "", String title = "", String subTitle = "", int index=0}) {
+    {required BuildContext context, String imagePath = "", String title = "", String subTitle = "", int index=0}) {
   return Column(
     children: [
       Image.asset(imagePath),
@@ -18,12 +20,12 @@ Widget appOnboardingPage(
         padding: EdgeInsets.only(left: 30, right: 30),
         child: text16Normal(text: subTitle),
       ),
-      nextButton(index, controller)
+      nextButton(index, controller, context)
     ],
   );
 }
 
-Widget nextButton(int index, PageController controller) {
+Widget nextButton(int index, PageController controller, BuildContext context) {
   String text = index < 3 ? "Next" : "Get Started";
   return GestureDetector(
     onTap: () {
@@ -34,7 +36,7 @@ Widget nextButton(int index, PageController controller) {
               curve: Curves.decelerate
           );
       } else {
-        // Navigator.of(context)
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
     },
     child: Container(

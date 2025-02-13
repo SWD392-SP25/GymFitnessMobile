@@ -38,6 +38,7 @@ class Welcome extends ConsumerWidget {
                   children: [
                     //first page
                     appOnboardingPage(_controller,
+                        context: context,
                         imagePath: "assets/images/welcome/welcome.png",
                         title: "Welcome to GYMBOT",
                         subTitle:
@@ -45,6 +46,7 @@ class Welcome extends ConsumerWidget {
                         index: 1),
                     //second page
                     appOnboardingPage(_controller,
+                        context: context,
                         imagePath: "assets/images/welcome/welcome.png",
                         title: "Quick and easy for newbie",
                         subTitle:
@@ -52,6 +54,7 @@ class Welcome extends ConsumerWidget {
                         index: 2),
                     //third page
                     appOnboardingPage(_controller,
+                        context: context,
                         imagePath: "assets/images/welcome/welcome.png",
                         title: "Choose your own training plan",
                         subTitle:
