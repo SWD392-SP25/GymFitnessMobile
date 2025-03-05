@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "786640143654",
+    "firebase_url": "https://gymbot-3ddf3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "gymbot-3ddf3",
+    "storage_bucket": "gymbot-3ddf3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:786640143654:android:b765553d6f92250f9fade7",
+        "android_client_info": {
+          "package_name": "com.example.gym_fitness_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "786640143654-kjnodvvjphqn7bt1h9hk5g78d8pp0gtd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gym_fitness_mobile",
+            "certificate_hash": "58dc1195b0cb0eed985ec985b0b7f70ccf36255b"
+          }
+        },
+        {
+          "client_id": "786640143654-jqgk5prvvrpallam7gsquss8du4omvor.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrnXQSy418UDWssfZf9UUanaBdoPlatvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "786640143654-h3atpn5o3lgenbku68ge189ps81064ei.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
