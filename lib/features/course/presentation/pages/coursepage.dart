@@ -14,6 +14,7 @@ class _CoursePageState extends State<CoursePage> {
   final List<Map<String, dynamic>> allCourses = [
     {
       'title': 'Product Design v1.0',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
       'author': 'Robertson Connie',
       'price': 1900000,
       'duration': '16 hours',
@@ -26,6 +27,79 @@ class _CoursePageState extends State<CoursePage> {
     },
     {
       'title': 'Flutter Development',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
+      'author': 'Jane Doe',
+      'price': 2000000,
+      'duration': '15 hours',
+      'category': 'New',
+      'lessons': [
+        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
+        {'title': 'State Management', 'duration': '30', 'locked': false},
+        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
+      ]
+    },{
+      'title': 'Flutter Development',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
+      'author': 'Jane Doe',
+      'price': 2000000,
+      'duration': '15 hours',
+      'category': 'New',
+      'lessons': [
+        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
+        {'title': 'State Management', 'duration': '30', 'locked': false},
+        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
+      ]
+    },{
+      'title': 'Flutter Development',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
+      'author': 'Jane Doe',
+      'price': 2000000,
+      'duration': '15 hours',
+      'category': 'New',
+      'lessons': [
+        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
+        {'title': 'State Management', 'duration': '30', 'locked': false},
+        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
+      ]
+    },{
+      'title': 'Flutter Development',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
+      'author': 'Jane Doe',
+      'price': 2000000,
+      'duration': '15 hours',
+      'category': 'New',
+      'lessons': [
+        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
+        {'title': 'State Management', 'duration': '30', 'locked': false},
+        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
+      ]
+    },{
+      'title': 'Flutter Development',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
+      'author': 'Jane Doe',
+      'price': 2000000,
+      'duration': '15 hours',
+      'category': 'New',
+      'lessons': [
+        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
+        {'title': 'State Management', 'duration': '30', 'locked': false},
+        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
+      ]
+    },{
+      'title': 'Flutter Development',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
+      'author': 'Jane Doe',
+      'price': 2000000,
+      'duration': '15 hours',
+      'category': 'New',
+      'lessons': [
+        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
+        {'title': 'State Management', 'duration': '30', 'locked': false},
+        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
+      ]
+    },{
+      'title': 'Flutter Development',
+      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
       'author': 'Jane Doe',
       'price': 2000000,
       'duration': '15 hours',
@@ -179,6 +253,7 @@ class _CoursePageState extends State<CoursePage> {
           MaterialPageRoute(
             builder: (context) => CourseDetailPage(course: {
               'title': course['title'],
+              'about': course['about'],
               'author': course['author'],
               'price': course['price'],
               'duration': course['duration'],
@@ -202,9 +277,16 @@ class _CoursePageState extends State<CoursePage> {
   }
 }
 
-class CourseDetailPage extends StatelessWidget {
+class CourseDetailPage extends StatefulWidget {
   final Map<String, dynamic> course;
   const CourseDetailPage({super.key, required this.course});
+
+  @override
+  _CourseDetailPageState createState() => _CourseDetailPageState();
+}
+
+class _CourseDetailPageState extends State<CourseDetailPage> {
+  bool isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -217,12 +299,12 @@ class CourseDetailPage extends StatelessWidget {
         children: [
           // Header with illustration image
           Container(
-            height: screenHeight * 0.8, // Adjust height based on screen size
+            height: screenHeight * 2, // Adjust height based on screen size
             decoration: const BoxDecoration(
-              color: Color(0xFFFEE2E2),
+              color: Colors.brown,
             ),
             child: Padding(
-              padding: EdgeInsets.only( left: 16, right: 16, bottom: 10),
+              padding: EdgeInsets.only(left: 16, right: 16, bottom: screenHeight * 0.5),
               child: Center(
                 child: Image.asset(
                   'assets/images/welcome/welcome.png', // Replace with your illustration image
@@ -234,12 +316,12 @@ class CourseDetailPage extends StatelessWidget {
 
           // Course content
           Positioned(
-            top: screenHeight * 0.3, // Adjust this value to control how much the image is covered
+            top: screenHeight * 0.4, // Adjust this value to control how much the image is covered
             left: 0,
             right: 0,
             bottom: 0, // Ensure the content takes up the remaining space
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10, top: 30),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -248,59 +330,89 @@ class CourseDetailPage extends StatelessWidget {
                 ),
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Title & Price
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.course['title'] ?? 'No title',
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "${widget.course['price']} đ",
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "${widget.course['duration']} • ${widget.course['lessons'].length} Lessons",
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // About this course
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'About this course',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.course['about'] ?? 'No description available',
+                          maxLines: isExpanded ? null : 2,
+                          overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              isExpanded = !isExpanded;
+                            });
+                          },
+                          child: Text(isExpanded ? 'View less' : 'View more'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Lessons list
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Title & Price
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                course['title'] ?? 'No title',
-                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                "${course['price']} đ",
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            "${course['duration']} • ${course['lessons'].length} Lessons",
-                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                          ),
-                          const SizedBox(height: 10),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: (widget.course['lessons'] ?? []).length, // Ensure lessons is not null
+                        itemBuilder: (context, index) {
+                          final lesson = widget.course['lessons'][index] ?? {}; // Avoid null
 
-                          // Lessons list
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: (course['lessons'] ?? []).length, // Ensure lessons is not null
-                            itemBuilder: (context, index) {
-                              final lesson = course['lessons'][index] ?? {}; // Avoid null
-
-                              return ListTile(
-                                leading: Text(
-                                  (index + 1).toString().padLeft(2, '0'),
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-                                ),
-                                title: Text(lesson['title'] ?? 'No Title'), // Avoid null title
-                                subtitle: Text("${lesson['duration'] ?? 'Unknown'} mins"),
-                                trailing: (lesson['locked'] ?? false)
-                                    ? const Icon(Icons.lock, color: Colors.grey)
-                                    : const Icon(Icons.play_circle_fill, color: Colors.blue),
-                                onTap: (lesson['locked'] ?? false) ? null : () {
-                                  // Handle lesson tap
-                                },
-                              );
+                          return ListTile(
+                            leading: Text(
+                              (index + 1).toString().padLeft(2, '0'),
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+                            ),
+                            title: Text(lesson['title'] ?? 'No Title'), // Avoid null title
+                            subtitle: Text("${lesson['duration'] ?? 'Unknown'} mins"),
+                            trailing: (lesson['locked'] ?? false)
+                                ? const Icon(Icons.lock, color: Colors.grey)
+                                : const Icon(Icons.play_circle_fill, color: Colors.blue),
+                            onTap: (lesson['locked'] ?? false) ? null : () {
+                              // Handle lesson tap
                             },
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),

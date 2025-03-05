@@ -40,6 +40,7 @@ dependencies:
   riverpod_generator: ^2.6.4
   build_runner: ^2.4.15
   lucide_icons: ^0.257.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
