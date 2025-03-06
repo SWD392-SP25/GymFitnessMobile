@@ -33,9 +33,10 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => AccountPage());
       default:
         return MaterialPageRoute(
-            builder: (_) => const Scaffold(
-              body: Center(child: Text('Page not found')),
-            ));
+            builder: (_) => MainScreen()
+            // const Scaffold(
+            //   body: Center(child: Text('Page not found'))),
+            );
     }
   }
 }

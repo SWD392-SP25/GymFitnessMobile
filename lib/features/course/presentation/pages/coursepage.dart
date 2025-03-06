@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gym_fitness_mobile/core/navigation/routes.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class CoursePage extends StatefulWidget {
@@ -37,78 +38,6 @@ class _CoursePageState extends State<CoursePage> {
         {'title': 'State Management', 'duration': '30', 'locked': false},
         {'title': 'Advanced UI', 'duration': '40', 'locked': true},
       ]
-    },{
-      'title': 'Flutter Development',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Jane Doe',
-      'price': 2000000,
-      'duration': '15 hours',
-      'category': 'New',
-      'lessons': [
-        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
-        {'title': 'State Management', 'duration': '30', 'locked': false},
-        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
-      ]
-    },{
-      'title': 'Flutter Development',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Jane Doe',
-      'price': 2000000,
-      'duration': '15 hours',
-      'category': 'New',
-      'lessons': [
-        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
-        {'title': 'State Management', 'duration': '30', 'locked': false},
-        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
-      ]
-    },{
-      'title': 'Flutter Development',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Jane Doe',
-      'price': 2000000,
-      'duration': '15 hours',
-      'category': 'New',
-      'lessons': [
-        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
-        {'title': 'State Management', 'duration': '30', 'locked': false},
-        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
-      ]
-    },{
-      'title': 'Flutter Development',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Jane Doe',
-      'price': 2000000,
-      'duration': '15 hours',
-      'category': 'New',
-      'lessons': [
-        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
-        {'title': 'State Management', 'duration': '30', 'locked': false},
-        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
-      ]
-    },{
-      'title': 'Flutter Development',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Jane Doe',
-      'price': 2000000,
-      'duration': '15 hours',
-      'category': 'New',
-      'lessons': [
-        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
-        {'title': 'State Management', 'duration': '30', 'locked': false},
-        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
-      ]
-    },{
-      'title': 'Flutter Development',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Jane Doe',
-      'price': 2000000,
-      'duration': '15 hours',
-      'category': 'New',
-      'lessons': [
-        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
-        {'title': 'State Management', 'duration': '30', 'locked': false},
-        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
-      ]
     },
   ];
 
@@ -133,73 +62,80 @@ class _CoursePageState extends State<CoursePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+          Navigator.pushReplacementNamed(context, AppRoutes.mainScreen);
+        }
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Course',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Course',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
+          actions: [
+            CircleAvatar(
+              backgroundColor: Colors.grey[300],
+              child: Icon(Icons.person, color: Colors.black),
+            ),
+            const SizedBox(width: 16),
+          ],
         ),
-        actions: [
-          CircleAvatar(
-            backgroundColor: Colors.grey[300],
-            child: Icon(Icons.person, color: Colors.black),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.search, color: Colors.grey),
-                suffixIcon: Icon(Icons.tune, color: Colors.grey),
-                hintText: 'Find Course',
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
+                  suffixIcon: Icon(Icons.tune, color: Colors.grey),
+                  hintText: 'Find Course',
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildCategoryCard('Tên Cơ', Colors.blue),
-                _buildCategoryCard('Tên cơ2', Colors.purple),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Choice Your Course',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _buildFilterButton('All', isSelected: selectedCategory == 'All'),
-                _buildFilterButton('Popular', isSelected: selectedCategory == 'Popular'),
-                _buildFilterButton('New', isSelected: selectedCategory == 'New'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                children: filteredCourses.map((course) => _buildCourseItem(context, course)).toList(),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildCategoryCard('Tên Cơ', Colors.blue),
+                  _buildCategoryCard('Tên cơ2', Colors.purple),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              const Text(
+                'Choice Your Course',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildFilterButton('All', isSelected: selectedCategory == 'All'),
+                  _buildFilterButton('Popular', isSelected: selectedCategory == 'Popular'),
+                  _buildFilterButton('New', isSelected: selectedCategory == 'New'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView(
+                  children: filteredCourses.map((course) => _buildCourseItem(context, course)).toList(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
