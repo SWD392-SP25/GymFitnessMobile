@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/auth/auth_provider.dart';
 
-// 🔹 FutureProvider để lấy idToken
 final idTokenProvider = FutureProvider<String?>((ref) async {
   final user = ref.watch(authStateProvider).value;
   final idToken = await user?.getIdToken();
@@ -16,77 +15,123 @@ class AccountPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).value;
-    final idToken = ref.watch(idTokenProvider); // 🔹 Lắng nghe idToken
+    final idToken = ref.watch(idTokenProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: user == null
-            ? ElevatedButton(
-                onPressed: () {
-                  ref.read(authControllerProvider.notifier).signInWithGoogle();
-                },
-                child: Text("Đăng nhập với Google"),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (user.photoURL != null)
-                    CircleAvatar(
-                      backgroundImage: NetworkImage(user.photoURL!),
-                      radius: 40,
-                    ),
-                  SizedBox(height: 10),
-
-                  Text("Tên: ${user.displayName ?? 'Không có'}"),
-                  Text("Email: ${user.email ?? 'Không có'}"),
-                  Text("Số điện thoại: ${user.phoneNumber ?? 'Không có'}"),
-                  Text("UID: ${user.uid}"),
-
-                  // 🔹 Lấy idToken bất đồng bộ
-                  idToken.when(
-                    data: (token) {
-                      print(
-                          "🔥 idToken: ${token ?? 'Không có'}"); // In ra console
-                      return TextFormField(
-                        initialValue: token ?? 'Không có idToken',
-                        readOnly: true, // ✅ Chỉ cho phép copy, không sửa
-                        decoration: InputDecoration(
-                          labelText: "idToken",
-                          border: OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: Icon(Icons.copy),
-                            onPressed: () {
-                              Clipboard.setData(ClipboardData(
-                                  text: token ?? 'Không có idToken'));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Đã sao chép idToken")),
+      appBar: AppBar(
+        title: const Text("Tài khoản của tôi"),
+        centerTitle: true,
+        automaticallyImplyLeading: false, // This will remove the back button
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.lightBlueAccent, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: user == null
+              ? ElevatedButton(
+                  onPressed: () {
+                    ref.read(authControllerProvider.notifier).signInWithGoogle();
+                  },
+                  child: const Text("Đăng nhập với Google"),
+                )
+              : SingleChildScrollView(
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (user.photoURL != null)
+                            CircleAvatar(
+                              backgroundImage: NetworkImage(user.photoURL!),
+                              radius: 50,
+                            )
+                          else
+                            const CircleAvatar(
+                              backgroundColor: Colors.grey,
+                              radius: 50,
+                              child: Icon(Icons.person, size: 50, color: Colors.white),
+                            ),
+                          const SizedBox(height: 20),
+                          Text(
+                            user.displayName ?? 'Không có tên',
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            user.email ?? 'Không có email',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "SĐT: ${user.phoneNumber ?? 'Không có'}",
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const Divider(height: 40, thickness: 1),
+                          idToken.when(
+                            data: (token) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "UID: ${user.uid}",
+                                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  TextFormField(
+                                    initialValue: token ?? 'Không có idToken',
+                                    readOnly: true,
+                                    decoration: InputDecoration(
+                                      labelText: "idToken",
+                                      border: const OutlineInputBorder(),
+                                      suffixIcon: IconButton(
+                                        icon: const Icon(Icons.copy),
+                                        onPressed: () {
+                                          Clipboard.setData(ClipboardData(text: token ?? 'Không có idToken'));
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text("Đã sao chép idToken")),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               );
                             },
+                            loading: () => const Center(child: CircularProgressIndicator()),
+                            error: (err, stack) {
+                              return const Text("Lỗi lấy idToken", style: TextStyle(color: Colors.red));
+                            },
                           ),
-                        ),
-                      );
-                    },
-                    loading: () => CircularProgressIndicator(),
-                    error: (err, stack) {
-                      print("❌ Lỗi lấy idToken: $err");
-                      return Text("Lỗi lấy idToken");
-                    },
+                          const SizedBox(height: 20),
+                          Text(
+                            "Đăng nhập qua: ${user.providerData.map((e) => e.providerId).join(', ')}",
+                            style: const TextStyle(fontSize: 14, color: Colors.black54),
+                          ),
+                          const SizedBox(height: 30),
+                          ElevatedButton(
+                            onPressed: () {
+                              ref.read(authControllerProvider.notifier).signOut();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                            ),
+                            child: const Text("Đăng xuất"),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-
-                  Text(
-                      "Đăng nhập qua: ${user.providerData.map((e) => e.providerId).join(", ")}"),
-
-                  SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: () {
-                      ref.read(authControllerProvider.notifier).signOut();
-                    },
-                    child: Text("Đăng xuất"),
-                  ),
-                ],
-              ),
+                ),
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:gym_fitness_mobile/core/navigation/routes.dart';
@@ -18,6 +19,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    // Load .env file
+    await dotenv.load(fileName: ".env");
+    print("🌐 .env loaded successfully");
+    
+    // Verify the API_URL value
+    final apiUrl = dotenv.env['API_URL'];
+    print("🌐 API_URL from .env: '$apiUrl'");
+    
+    if (apiUrl == null || apiUrl.isEmpty) {
+      print("❌ API_URL is missing or empty in .env file");
+    }
+  } catch (e) {
+    print("❌ Error loading .env file: $e");
+  }
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   ); // 🔥 Đảm bảo Firebase đã khởi tạo trước khi dùng plugin khác.

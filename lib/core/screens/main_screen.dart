@@ -12,7 +12,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  // Danh sách các trang con của MainScreen
   final List<Widget> _pages = [
     HomePage(),
     CoursePage(),
@@ -21,46 +20,63 @@ class _MainScreenState extends State<MainScreen> {
     AccountPage(),
   ];
 
-  // Hàm này thay đổi index của các tab
   void _onItemTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
+  // Add this method to handle back button presses
+  Future<bool> _onWillPop() async {
+    if (_currentIndex != 0) {
+      // If not on the home tab, go to home tab
+      setState(() {
+        _currentIndex = 0;
+      });
+      return false; // Don't exit the app
+    }
+    return true; // Allow exiting the app
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_currentIndex], // Chỉ thay đổi nội dung body mà không làm mất Footer
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Course',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'GYMBOT',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'Meet PT',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: 'Account',
-          ),
-        ],
-        selectedItemColor: Colors.blue, // Change color for selected tab
-        unselectedItemColor: Colors.grey, // Change color for unselected tabs
-        showUnselectedLabels: true,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.school),
+              label: 'Course',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat),
+              label: 'GYMBOT',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.group),
+              label: 'Meet PT',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_circle),
+              label: 'Account',
+            ),
+          ],
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+        ),
       ),
     );
   }

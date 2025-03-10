@@ -24,5 +24,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.google.gms:google-services:4.4.0' // 🔹 Đảm bảo đã có dòng này
+        classpath 'com.android.tools.build:gradle:8.2.0' // Kiểm tra và cập nhật phiên bản mới nhất
     }
 }
