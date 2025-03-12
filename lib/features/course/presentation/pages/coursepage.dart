@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_fitness_mobile/core/navigation/routes.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:gym_fitness_mobile/core/network/dio_client.dart';
+import 'package:gym_fitness_mobile/core/network/endpoints/muscle_group.dart';
+import 'package:gym_fitness_mobile/core/network/endpoints/subscription_plan.dart';
 
 class CoursePage extends StatefulWidget {
   const CoursePage({super.key});
@@ -12,56 +13,107 @@ class CoursePage extends StatefulWidget {
 
 class _CoursePageState extends State<CoursePage> {
   String selectedCategory = 'All';
-  final List<Map<String, dynamic>> allCourses = [
-    {
-      'title': 'Product Design v1.0',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Robertson Connie',
-      'price': 1900000,
-      'duration': '16 hours',
-      'category': 'Popular',
-      'lessons': [
-        {'title': 'Introduction', 'duration': '10', 'locked': false},
-        {'title': 'UI/UX Principles', 'duration': '12', 'locked': false},
-        {'title': 'Final Project', 'duration': '15', 'locked': true},
-      ]
-    },
-    {
-      'title': 'Flutter Development',
-      'about':'set up persipiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo',
-      'author': 'Jane Doe',
-      'price': 2000000,
-      'duration': '15 hours',
-      'category': 'New',
-      'lessons': [
-        {'title': 'Flutter Basics', 'duration': '20', 'locked': false},
-        {'title': 'State Management', 'duration': '30', 'locked': false},
-        {'title': 'Advanced UI', 'duration': '40', 'locked': true},
-      ]
-    },
-  ];
+  String searchQuery = ''; // Add search query state
+  
+  // Text controller for search field
+  final TextEditingController _searchController = TextEditingController();
+  
+  // Thay thế allCourses và filteredCourses bằng subscriptionPlans
+  List<SubscriptionPlan> subscriptionPlans = [];
+  List<SubscriptionPlan> filteredPlans = []; // Add filtered list
+  bool isLoadingPlans = true;
+  
+  List<MuscleGroup> muscleGroups = [];
+  bool isLoadingMuscleGroups = true;
 
-  List<Map<String, dynamic>> filteredCourses = [];
+  final MuscleGroupApiService _muscleGroupApiService =
+      MuscleGroupApiService(DioClient());
+  
+  final SubscriptionPlanApiService _subscriptionPlanApiService =
+      SubscriptionPlanApiService(DioClient());
 
   @override
   void initState() {
     super.initState();
-    filteredCourses = allCourses;
+    fetchMuscleGroups();
+    fetchSubscriptionPlans();
+    
+    // Add listener to search controller
+    _searchController.addListener(_filterBySearchQuery);
+  }
+  
+  @override
+  void dispose() {
+    // Clean up controller when the widget is disposed
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Filter plans based on search query
+  void _filterBySearchQuery() {
+    final query = _searchController.text.toLowerCase();
+    
+    setState(() {
+      searchQuery = query;
+      // The filteredPlans will be computed in the build method
+    });
+  }
+
+  Future<void> fetchMuscleGroups() async {
+    try {
+      final data = await _muscleGroupApiService.getMuscleGroup();
+      setState(() {
+        muscleGroups = data;
+        isLoadingMuscleGroups = false;
+      });
+    } catch (e) {
+      print('Error fetching muscle groups: $e');
+      setState(() {
+        isLoadingMuscleGroups = false;
+      });
+    }
+  }
+  
+  Future<void> fetchSubscriptionPlans() async {
+    try {
+      print("🔷 Fetching subscription plans...");
+      final plans = await _subscriptionPlanApiService.getSubscriptionPlans();
+      print("🔷 Received ${plans.length} subscription plans");
+      
+      setState(() {
+        subscriptionPlans = plans;
+        isLoadingPlans = false;
+      });
+    } catch (e) {
+      print('Error fetching subscription plans: $e');
+      setState(() {
+        isLoadingPlans = false;
+      });
+    }
   }
 
   void filterCourses(String category) {
     setState(() {
       selectedCategory = category;
-      if (category == 'All') {
-        filteredCourses = allCourses;
-      } else {
-        filteredCourses = allCourses.where((course) => course['category'] == category).toList();
-      }
+      // Filtering is done in the build method
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Apply filters to get final list
+    final displayedPlans = subscriptionPlans.where((plan) {
+      // Apply category filter
+      final matchesCategory = selectedCategory == 'All' || 
+                             (plan.isActive ? 'Active' : 'Inactive') == selectedCategory;
+      
+      // Apply search filter
+      final matchesSearch = searchQuery.isEmpty ||
+                           plan.name.toLowerCase().contains(searchQuery.toLowerCase());
+      
+      return matchesCategory && matchesSearch;
+    }).toList();
+
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
@@ -74,7 +126,7 @@ class _CoursePageState extends State<CoursePage> {
           backgroundColor: Colors.white,
           automaticallyImplyLeading: false,
           title: const Text(
-            'Course',
+            'Gói tập',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -94,11 +146,20 @@ class _CoursePageState extends State<CoursePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Search field with controller
               TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  suffixIcon: Icon(Icons.tune, color: Colors.grey),
-                  hintText: 'Find Course',
+                  suffixIcon: searchQuery.isNotEmpty 
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        ) 
+                      : Icon(Icons.tune, color: Colors.grey),
+                  hintText: 'Tìm gói tập',
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
@@ -108,31 +169,83 @@ class _CoursePageState extends State<CoursePage> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildCategoryCard('Tên Cơ', Colors.blue),
-                  _buildCategoryCard('Tên cơ2', Colors.purple),
-                ],
+              SizedBox(
+                height: 100,
+                child: isLoadingMuscleGroups
+                    ? Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: muscleGroups.length,
+                        itemBuilder: (context, index) {
+                          final group = muscleGroups[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _buildCategoryCard(group.name, Colors.blue),
+                          );
+                        },
+                      ),
               ),
+
               const SizedBox(height: 16),
               const Text(
-                'Choice Your Course',
+                'Chọn gói tập của bạn',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _buildFilterButton('All', isSelected: selectedCategory == 'All'),
-                  _buildFilterButton('Popular', isSelected: selectedCategory == 'Popular'),
-                  _buildFilterButton('New', isSelected: selectedCategory == 'New'),
+                  _buildFilterButton('All',
+                      isSelected: selectedCategory == 'All'),
+                  _buildFilterButton('Active',
+                      isSelected: selectedCategory == 'Active'),
+                  _buildFilterButton('Inactive',
+                      isSelected: selectedCategory == 'Inactive'),
                 ],
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: ListView(
-                  children: filteredCourses.map((course) => _buildCourseItem(context, course)).toList(),
+              
+              // Results count
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Tìm thấy ${displayedPlans.length} gói tập',
+                  style: TextStyle(
+                    fontSize: 14, 
+                    color: Colors.grey[600],
+                  ),
                 ),
+              ),
+              
+              Expanded(
+                child: isLoadingPlans
+                    ? Center(child: CircularProgressIndicator())
+                    : displayedPlans.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Không tìm thấy gói tập nào',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: displayedPlans.length,
+                            itemBuilder: (context, index) {
+                              return _buildSubscriptionPlanItem(context, displayedPlans[index]);
+                            },
+                          ),
               ),
             ],
           ),
@@ -181,31 +294,50 @@ class _CoursePageState extends State<CoursePage> {
     );
   }
 
-  Widget _buildCourseItem(BuildContext context, Map<String, dynamic> course) {
+  Widget _buildSubscriptionPlanItem(BuildContext context, SubscriptionPlan plan) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CourseDetailPage(course: {
-              'title': course['title'],
-              'about': course['about'],
-              'author': course['author'],
-              'price': course['price'],
-              'duration': course['duration'],
-              'lessons': course['lessons'] ?? [], // Ensure lessons always exist
-            }),
+            builder: (context) => CourseDetailPage(
+              course: {
+                'title': plan.name,
+                'about': plan.description,
+                'author': '', // Không có thông tin tác giả
+                'price': plan.price,
+                'duration': '${plan.durationMonths} tháng',
+                'lessons': [], // Không có bài học
+                'status': plan.isActive ? 'Active' : 'Inactive',
+              },
+            ),
           ),
         );
       },
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: ListTile(
-          title: Text(course['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(course['author']),
-          trailing: Text(
-            "${course['price']} đ",
-            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+          title: Text(
+            plan.name,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text('${plan.durationMonths} tháng'),
+          trailing: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                "${plan.price} đ",
+                style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                plan.isActive ? "Active" : "Inactive",
+                style: TextStyle(
+                  color: plan.isActive ? Colors.green : Colors.red,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -240,11 +372,13 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
               color: Colors.brown,
             ),
             child: Padding(
-              padding: EdgeInsets.only(left: 16, right: 16, bottom: screenHeight * 0.5),
+              padding: EdgeInsets.only(
+                  left: 16, right: 16, bottom: screenHeight * 0.5),
               child: Center(
                 child: Image.asset(
                   'assets/images/welcome/welcome.png', // Replace with your illustration image
-                  height: screenHeight * 0.5, // Adjust image height based on screen size
+                  height: screenHeight *
+                      0.5, // Adjust image height based on screen size
                 ),
               ),
             ),
@@ -252,12 +386,14 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
 
           // Course content
           Positioned(
-            top: screenHeight * 0.4, // Adjust this value to control how much the image is covered
+            top: screenHeight *
+                0.4, // Adjust this value to control how much the image is covered
             left: 0,
             right: 0,
             bottom: 0, // Ensure the content takes up the remaining space
             child: Container(
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10, top: 30),
+              padding: const EdgeInsets.only(
+                  left: 20, right: 20, bottom: 10, top: 30),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -273,11 +409,15 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                     children: [
                       Text(
                         widget.course['title'] ?? 'No title',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         "${widget.course['price']} đ",
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue),
                       ),
                     ],
                   ),
@@ -296,7 +436,8 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                     alignment: Alignment.centerLeft,
                     child: const Text(
                       'About this course',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -308,8 +449,11 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                         Text(
                           widget.course['about'] ?? 'No description available',
                           maxLines: isExpanded ? null : 2,
-                          overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                          overflow: isExpanded
+                              ? TextOverflow.visible
+                              : TextOverflow.ellipsis,
+                          style:
+                              TextStyle(fontSize: 14, color: Colors.grey[800]),
                         ),
                         TextButton(
                           onPressed: () {
@@ -330,23 +474,33 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                       child: ListView.builder(
                         shrinkWrap: true,
                         physics: NeverScrollableScrollPhysics(),
-                        itemCount: (widget.course['lessons'] ?? []).length, // Ensure lessons is not null
+                        itemCount: (widget.course['lessons'] ?? [])
+                            .length, // Ensure lessons is not null
                         itemBuilder: (context, index) {
-                          final lesson = widget.course['lessons'][index] ?? {}; // Avoid null
+                          final lesson = widget.course['lessons'][index] ??
+                              {}; // Avoid null
 
                           return ListTile(
                             leading: Text(
                               (index + 1).toString().padLeft(2, '0'),
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey),
                             ),
-                            title: Text(lesson['title'] ?? 'No Title'), // Avoid null title
-                            subtitle: Text("${lesson['duration'] ?? 'Unknown'} mins"),
+                            title: Text(lesson['title'] ??
+                                'No Title'), // Avoid null title
+                            subtitle:
+                                Text("${lesson['duration'] ?? 'Unknown'} mins"),
                             trailing: (lesson['locked'] ?? false)
                                 ? const Icon(Icons.lock, color: Colors.grey)
-                                : const Icon(Icons.play_circle_fill, color: Colors.blue),
-                            onTap: (lesson['locked'] ?? false) ? null : () {
-                              // Handle lesson tap
-                            },
+                                : const Icon(Icons.play_circle_fill,
+                                    color: Colors.blue),
+                            onTap: (lesson['locked'] ?? false)
+                                ? null
+                                : () {
+                                    // Handle lesson tap
+                                  },
                           );
                         },
                       ),
@@ -369,7 +523,9 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                         onPressed: () {
                           // Handle course purchase
                         },
-                        child: const Text('Buy Now', style: TextStyle(fontSize: 16, color: Colors.white)),
+                        child: const Text('Buy Now',
+                            style:
+                                TextStyle(fontSize: 16, color: Colors.white)),
                       ),
                     ),
                   ),
