@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gym_fitness_mobile/features/appointment/presentation/pages/appointment.dart';
 import 'package:gym_fitness_mobile/features/home/presentation/pages/homepage.dart';
 import 'package:gym_fitness_mobile/features/course/presentation/pages/coursepage.dart';
 import 'package:gym_fitness_mobile/features/chat/presentation/pages/chatpage.dart';
@@ -16,6 +17,7 @@ class _MainScreenState extends State<MainScreen> {
     HomePage(),
     CoursePage(),
     ChatbotPage(),
+    AppointmentPage(),
     ChatPage(),
     AccountPage(),
   ];
@@ -63,6 +65,10 @@ class _MainScreenState extends State<MainScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.chat),
               label: 'GYMBOT',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.schedule),
+              label: 'Appointment',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.group),

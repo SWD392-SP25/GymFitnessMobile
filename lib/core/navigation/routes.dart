@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gym_fitness_mobile/features/appointment/presentation/pages/appointment.dart';
 import 'package:gym_fitness_mobile/features/home/presentation/pages/homepage.dart';
 import 'package:gym_fitness_mobile/features/course/presentation/pages/coursepage.dart';
 import 'package:gym_fitness_mobile/features/chat/presentation/pages/chatpage.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String chatbot = '/chatbot';
   static const String meetPt = '/meetpt';
   static const String account = '/account';
+  static const String appointment = '/appoitment';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -31,6 +33,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => ChatPage());
       case account:
         return MaterialPageRoute(builder: (_) => AccountPage());
+      case appointment:
+        return MaterialPageRoute(builder: (_) => AppointmentPage());
       default:
         return MaterialPageRoute(
             builder: (_) => const Scaffold(
