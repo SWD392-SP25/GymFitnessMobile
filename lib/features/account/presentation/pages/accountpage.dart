@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart'; // Add this import
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../../core/auth/auth_provider.dart';
+
+// Change idTokenProvider to fcmTokenProvider
+final fcmTokenProvider = FutureProvider<String?>((ref) async {
+  final user = ref.watch(authStateProvider).value;
+  if (user != null) {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    return fcmToken;
+  }
+  return null;
+});
 
 class AccountPage extends ConsumerWidget {
   const AccountPage({super.key});
@@ -8,6 +20,7 @@ class AccountPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).value;
+    final fcmToken = ref.watch(fcmTokenProvider); // Change from idToken to fcmToken
     final isLoggedIn = user != null;
 
     return Scaffold(
@@ -37,6 +50,36 @@ class AccountPage extends ConsumerWidget {
           Text(
             isLoggedIn ? user.displayName ?? "No Name" : "Guest",
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+            const SizedBox(height: 10),
+          fcmToken.when(
+            data: (token) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextFormField(
+                  initialValue: token ?? 'Không có FCM Token',
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: "Firebase Token",
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.copy),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: token ?? 'Không có FCM Token'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Đã sao chép Firebase Token")),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => const Text(
+              "Lỗi lấy Firebase Token",
+              style: TextStyle(color: Colors.red),
+            ),
           ),
           const SizedBox(height: 20),
           // Danh sách tính năng
