@@ -3,6 +3,7 @@ import 'package:gym_fitness_mobile/core/navigation/routes.dart';
 import 'package:gym_fitness_mobile/core/network/dio_client.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/muscle_group.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/subscription_plan.dart';
+import 'package:gym_fitness_mobile/features/course/presentation/pages/muscle_group_detail_page.dart';
 
 class CoursePage extends StatefulWidget {
   const CoursePage({super.key});
@@ -61,7 +62,7 @@ class _CoursePageState extends State<CoursePage> {
 
   Future<void> fetchMuscleGroups() async {
     try {
-      final data = await _muscleGroupApiService.getMuscleGroup();
+      final data = await _muscleGroupApiService.getMuscleGroups();
       setState(() {
         muscleGroups = data;
         isLoadingMuscleGroups = false;
@@ -255,20 +256,33 @@ class _CoursePageState extends State<CoursePage> {
   }
 
   Widget _buildCategoryCard(String title, Color color) {
-    return Container(
-      width: 150,
-      height: 100,
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Center(
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
+    // Find the corresponding muscle group
+    final muscleGroup = muscleGroups.firstWhere((group) => group.name == title);
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MuscleGroupDetailPage(muscleGroup: muscleGroup),
+          ),
+        );
+      },
+      child: Container(
+        width: 150,
+        height: 100,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ),
       ),
@@ -300,17 +314,7 @@ class _CoursePageState extends State<CoursePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CourseDetailPage(
-              course: {
-                'title': plan.name,
-                'about': plan.description,
-                'author': '', // Không có thông tin tác giả
-                'price': plan.price,
-                'duration': '${plan.durationMonths} tháng',
-                'lessons': [], // Không có bài học
-                'status': plan.isActive ? 'Active' : 'Inactive',
-              },
-            ),
+            builder: (context) => CourseDetailPage(plan: plan),
           ),
         );
       },
@@ -346,8 +350,8 @@ class _CoursePageState extends State<CoursePage> {
 }
 
 class CourseDetailPage extends StatefulWidget {
-  final Map<String, dynamic> course;
-  const CourseDetailPage({super.key, required this.course});
+  final SubscriptionPlan plan;
+  const CourseDetailPage({super.key, required this.plan});
 
   @override
   _CourseDetailPageState createState() => _CourseDetailPageState();
@@ -358,182 +362,119 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Header with illustration image
-          Container(
-            height: screenHeight * 2, // Adjust height based on screen size
-            decoration: const BoxDecoration(
-              color: Colors.brown,
-            ),
-            child: Padding(
-              padding: EdgeInsets.only(
-                  left: 16, right: 16, bottom: screenHeight * 0.5),
-              child: Center(
-                child: Image.asset(
-                  'assets/images/welcome/welcome.png', // Replace with your illustration image
-                  height: screenHeight *
-                      0.5, // Adjust image height based on screen size
-                ),
+      appBar: AppBar(
+        title: Text(widget.plan.name),
+        backgroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Plan Details
+              Text(
+                'Chi tiết gói tập',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            ),
-          ),
-
-          // Course content
-          Positioned(
-            top: screenHeight *
-                0.4, // Adjust this value to control how much the image is covered
-            left: 0,
-            right: 0,
-            bottom: 0, // Ensure the content takes up the remaining space
-            child: Container(
-              padding: const EdgeInsets.only(
-                  left: 20, right: 20, bottom: 10, top: 30),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
+              const SizedBox(height: 8),
+              Text(widget.plan.description),
+              Text(
+                'Giá: ${widget.plan.price} đ',
+                style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
               ),
-              child: Column(
-                children: [
-                  // Title & Price
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Text('Thời hạn: ${widget.plan.durationMonths} tháng'),
+              
+              const SizedBox(height: 20),
+              
+              // Workout Plans
+              Text(
+                'Chương trình tập',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: widget.plan.workoutPlans.length,
+                itemBuilder: (context, index) {
+                  final workoutPlan = widget.plan.workoutPlans[index];
+                  return ExpansionTile(
+                    title: Text(workoutPlan.name),
+                    subtitle: Text('${workoutPlan.durationWeeks} tuần'),
                     children: [
-                      Text(
-                        widget.course['title'] ?? 'No title',
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        "${widget.course['price']} đ",
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Mô tả: ${workoutPlan.description}'),
+                            Text('Đối tượng: ${workoutPlan.targetAudience}'),
+                            Text('Mục tiêu: ${workoutPlan.goals}'),
+                            Text('Yêu cầu: ${workoutPlan.prerequisites}'),
+                            const SizedBox(height: 8),
+                            
+                            // Exercises
+                            Text(
+                              'Bài tập',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: workoutPlan.workoutPlanExercises.length,
+                              itemBuilder: (context, exerciseIndex) {
+                                final exerciseDetail = workoutPlan.workoutPlanExercises[exerciseIndex];
+                                return ListTile(
+                                  title: Text(exerciseDetail.exercise.name),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Tuần ${exerciseDetail.weekNumber}, Ngày ${exerciseDetail.dayOfWeek}'),
+                                      Text('${exerciseDetail.sets} sets x ${exerciseDetail.reps} reps'),
+                                      Text('Nghỉ: ${exerciseDetail.restTimeSeconds}s'),
+                                      if (exerciseDetail.notes.isNotEmpty)
+                                        Text('Ghi chú: ${exerciseDetail.notes}'),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 5),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "${widget.course['duration']} • ${widget.course['lessons'].length} Lessons",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // About this course
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      'About this course',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.course['about'] ?? 'No description available',
-                          maxLines: isExpanded ? null : 2,
-                          overflow: isExpanded
-                              ? TextOverflow.visible
-                              : TextOverflow.ellipsis,
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.grey[800]),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              isExpanded = !isExpanded;
-                            });
-                          },
-                          child: Text(isExpanded ? 'View less' : 'View more'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Lessons list
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: (widget.course['lessons'] ?? [])
-                            .length, // Ensure lessons is not null
-                        itemBuilder: (context, index) {
-                          final lesson = widget.course['lessons'][index] ??
-                              {}; // Avoid null
-
-                          return ListTile(
-                            leading: Text(
-                              (index + 1).toString().padLeft(2, '0'),
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey),
-                            ),
-                            title: Text(lesson['title'] ??
-                                'No Title'), // Avoid null title
-                            subtitle:
-                                Text("${lesson['duration'] ?? 'Unknown'} mins"),
-                            trailing: (lesson['locked'] ?? false)
-                                ? const Icon(Icons.lock, color: Colors.grey)
-                                : const Icon(Icons.play_circle_fill,
-                                    color: Colors.blue),
-                            onTap: (lesson['locked'] ?? false)
-                                ? null
-                                : () {
-                                    // Handle lesson tap
-                                  },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-
-                  // Buy Now button
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        onPressed: () {
-                          // Handle course purchase
-                        },
-                        child: const Text('Buy Now',
-                            style:
-                                TextStyle(fontSize: 16, color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
+              
+              // Buy Now button
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () {
+                    // Handle subscription purchase
+                  },
+                  child: const Text(
+                    'Đăng ký ngay',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

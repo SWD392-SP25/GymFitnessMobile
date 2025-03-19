@@ -14,6 +14,13 @@ final fcmTokenProvider = FutureProvider<String?>((ref) async {
   return null;
 });
 
+// Thêm provider cho idToken
+final idTokenProvider = FutureProvider<String?>((ref) async {
+  final user = ref.watch(authStateProvider).value;
+  final idToken = await user?.getIdToken();
+  return idToken;
+});
+
 class AccountPage extends ConsumerWidget {
   const AccountPage({super.key});
 
@@ -21,6 +28,7 @@ class AccountPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).value;
     final fcmToken = ref.watch(fcmTokenProvider); // Change from idToken to fcmToken
+    final idToken = ref.watch(idTokenProvider);
     final isLoggedIn = user != null;
 
     return Scaffold(
@@ -78,6 +86,36 @@ class AccountPage extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => const Text(
               "Lỗi lấy Firebase Token",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+          const SizedBox(height: 10),
+          idToken.when(
+            data: (token) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextFormField(
+                  initialValue: token ?? 'Không có ID Token',
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: "ID Token",
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.copy),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: token ?? 'Không có ID Token'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Đã sao chép ID Token")),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => const Text(
+              "Lỗi lấy ID Token",
               style: TextStyle(color: Colors.red),
             ),
           ),
