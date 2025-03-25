@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gym_fitness_mobile/core/navigation/routes.dart';
 import 'package:gym_fitness_mobile/core/network/dio_client.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/muscle_group.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/subscription_plan.dart';
 import 'package:gym_fitness_mobile/features/course/presentation/pages/muscle_group_detail_page.dart';
+import 'package:video_player/video_player.dart'; // Add this import
 
 import '../../../../core/network/endpoints/workout_plan.dart';
 import '../../../../core/network/endpoints/workout_plan_exercise.dart';
@@ -186,7 +189,8 @@ class _CoursePageState extends State<CoursePage> {
                           final group = muscleGroups[index];
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: _buildCategoryCard(group.name, Colors.blue),
+                            child:
+                                _buildCategoryCard(group.name, group.imageUrl),
                           );
                         },
                       ),
@@ -261,12 +265,11 @@ class _CoursePageState extends State<CoursePage> {
     );
   }
 
-  Widget _buildCategoryCard(String title, Color color) {
-    // Find the corresponding muscle group
-    final muscleGroup = muscleGroups.firstWhere((group) => group.name == title);
-
+  Widget _buildCategoryCard(String title, String imageUrl) {
     return GestureDetector(
       onTap: () {
+        final muscleGroup =
+            muscleGroups.firstWhere((group) => group.name == title);
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -279,7 +282,10 @@ class _CoursePageState extends State<CoursePage> {
         width: 150,
         height: 100,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -288,7 +294,14 @@ class _CoursePageState extends State<CoursePage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: Offset(0, 1),
+                  blurRadius: 3,
+                  color: Colors.black.withOpacity(0.7),
+                ),
+              ],
             ),
           ),
         ),
@@ -396,7 +409,8 @@ class CourseDetailPage extends StatefulWidget {
   _CourseDetailPageState createState() => _CourseDetailPageState();
 }
 
-class _CourseDetailPageState extends State<CourseDetailPage> {
+class _CourseDetailPageState extends State<CourseDetailPage>
+    with SingleTickerProviderStateMixin {
   final WorkoutPlanApiService _workoutPlanApiService =
       WorkoutPlanApiService(DioClient());
   final WorkoutPlanExerciseApiService _workoutPlanExerciseApiService =
@@ -404,6 +418,48 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
   final PaymentApiService _paymentApiService = PaymentApiService(DioClient());
 
   bool isExpanded = false;
+  String? playingVideoUrl; // Add state to track the currently playing video
+  VideoPlayerController? _videoController; // Add video controller
+  bool _showControls = false; // Track visibility of video controls
+  Timer? _hideControlsTimer; // Timer to hide controls after inactivity
+  AnimationController?
+      _animationController; // Controller for spinning animation
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(); // Repeat animation
+  }
+
+  @override
+  void dispose() {
+    _hideControlsTimer?.cancel();
+    _videoController?.dispose(); // Dispose video controller
+    _animationController?.dispose();
+    super.dispose();
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+
+    if (_showControls) {
+      _startHideControlsTimer();
+    }
+  }
+
+  void _startHideControlsTimer() {
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+      setState(() {
+        _showControls = false;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -413,229 +469,479 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
         title: Text(widget.plan.name),
         backgroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Plan Details
-              Text(
-                'Chi tiết gói tập',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(widget.plan.description),
-              Text(
-                'Giá: ${widget.plan.price} đ',
-                style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold),
-              ),
-              Text('Thời hạn: ${widget.plan.durationMonths} tháng'),
-
-              const SizedBox(height: 20),
-
-              // Workout Plans
-              Text(
-                'Chương trình tập',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: widget.plan.workoutPlans.length,
-                itemBuilder: (context, index) {
-                  final workoutPlan = widget.plan.workoutPlans[index];
-                  return ExpansionTile(
-                    title: Text(workoutPlan.name),
-                    subtitle: Text('${workoutPlan.durationWeeks} tuần'),
-                    onExpansionChanged: (expanded) async {
-                      if (expanded) {
-                        try {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (BuildContext context) {
-                              return const Center(
-                                  child: CircularProgressIndicator());
-                            },
-                          );
-
-                          // Lấy chi tiết workout plan
-                          final workoutPlanDetail = await _workoutPlanApiService
-                              .getWorkoutPlanById(workoutPlan.planId);
-
-                          // Lấy chi tiết từng bài tập trong workout plan
-                          List<WorkoutPlanExercise> updatedExercises = [];
-                          for (var exercise
-                              in workoutPlanDetail.workoutPlanExercises) {
-                            final exerciseDetail =
-                                await _workoutPlanExerciseApiService
-                                    .getWorkoutPlanExerciseById(
-                                        exercise.planId);
-                            updatedExercises.add(exerciseDetail);
-                          }
-
-                          // Cập nhật lại danh sách bài tập trong workout plan
-                          final updatedWorkoutPlan = workoutPlanDetail.copyWith(
-                              workoutPlanExercises: updatedExercises);
-
-                          Navigator.pop(context);
-
-                          setState(() {
-                            widget.plan.workoutPlans[index] =
-                                updatedWorkoutPlan;
-                          });
-                        } catch (e) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content:
-                                  Text('Error loading workout details: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Mô tả: ${workoutPlan.description}'),
-                            Text('Đối tượng: ${workoutPlan.targetAudience}'),
-                            Text('Mục tiêu: ${workoutPlan.goals}'),
-                            Text('Yêu cầu: ${workoutPlan.prerequisites}'),
-                            const SizedBox(height: 8),
-
-                            // Exercises
-                            Text(
-                              'Bài tập',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount:
-                                  workoutPlan.workoutPlanExercises.length,
-                              itemBuilder: (context, exerciseIndex) {
-                                final exerciseDetail = workoutPlan
-                                    .workoutPlanExercises[exerciseIndex];
-
-                                return ListTile(
-                                    leading: exerciseDetail
-                                                .exercise?.imageUrl !=
-                                            null
-                                        ? Image.network(
-                                            exerciseDetail.exercise.imageUrl ??
-                                                'https://example.com/default-image.png',
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null,
-                                    title: Text(exerciseDetail.exercise?.name ??
-                                        'Exercise ${exerciseDetail.exerciseId}'),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                            'Tuần ${exerciseDetail.weekNumber}, Ngày ${exerciseDetail.dayOfWeek}'),
-                                        Text(
-                                            '${exerciseDetail.sets} sets x ${exerciseDetail.reps} reps'),
-                                        Text(
-                                            'Nghỉ: ${exerciseDetail.restTimeSeconds}s'),
-                                        if (exerciseDetail.notes.isNotEmpty)
-                                          Text(
-                                              'Ghi chú: ${exerciseDetail.notes}'),
-                                      ],
-                                    ));
-                              },
-                            ),
-                          ],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: 200), // Leave space for the sticky video
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Plan Details
+                        Text(
+                          'Chi tiết gói tập',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                        const SizedBox(height: 8),
+                        Text(widget.plan.description),
+                        Text(
+                          'Giá: ${widget.plan.price} đ',
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        Text('Thời hạn: ${widget.plan.durationMonths} tháng'),
 
-              // Buy Now button
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                        const SizedBox(height: 20),
+
+                        // Workout Plans
+                        Text(
+                          'Chương trình tập',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: widget.plan.workoutPlans.length,
+                          itemBuilder: (context, index) {
+                            final workoutPlan = widget.plan.workoutPlans[index];
+                            return ExpansionTile(
+                              title: Text(workoutPlan.name),
+                              subtitle:
+                                  Text('${workoutPlan.durationWeeks} tuần'),
+                              onExpansionChanged: (expanded) async {
+                                if (expanded) {
+                                  try {
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (BuildContext context) {
+                                        return const Center(
+                                            child: CircularProgressIndicator());
+                                      },
+                                    );
+
+                                    // Lấy chi tiết workout plan
+                                    final workoutPlanDetail =
+                                        await _workoutPlanApiService
+                                            .getWorkoutPlanById(
+                                                workoutPlan.planId);
+
+                                    // Lấy chi tiết từng bài tập trong workout plan
+                                    List<WorkoutPlanExercise> updatedExercises =
+                                        [];
+                                    for (var exercise in workoutPlanDetail
+                                        .workoutPlanExercises) {
+                                      final exerciseDetail =
+                                          await _workoutPlanExerciseApiService
+                                              .getWorkoutPlanExerciseById(
+                                                  exercise.planId);
+                                      updatedExercises.add(exerciseDetail);
+                                    }
+
+                                    // Cập nhật lại danh sách bài tập trong workout plan
+                                    final updatedWorkoutPlan =
+                                        workoutPlanDetail.copyWith(
+                                            workoutPlanExercises:
+                                                updatedExercises);
+
+                                    Navigator.pop(context);
+
+                                    setState(() {
+                                      widget.plan.workoutPlans[index] =
+                                          updatedWorkoutPlan;
+                                    });
+                                  } catch (e) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Error loading workout details: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Mô tả: ${workoutPlan.description}'),
+                                      Text(
+                                          'Đối tượng: ${workoutPlan.targetAudience}'),
+                                      Text('Mục tiêu: ${workoutPlan.goals}'),
+                                      Text(
+                                          'Yêu cầu: ${workoutPlan.prerequisites}'),
+                                      const SizedBox(height: 8),
+
+                                      // Exercises
+                                      Text(
+                                        'Bài tập',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemCount: workoutPlan
+                                            .workoutPlanExercises.length,
+                                        itemBuilder: (context, exerciseIndex) {
+                                          final exerciseDetail =
+                                              workoutPlan.workoutPlanExercises[
+                                                  exerciseIndex];
+
+                                          return ListTile(
+                                            leading: exerciseDetail
+                                                        .exercise?.imageUrl !=
+                                                    null
+                                                ? Image.network(
+                                                    exerciseDetail.exercise
+                                                            .imageUrl ??
+                                                        'https://example.com/default-image.png',
+                                                    width: 50,
+                                                    height: 50,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : null,
+                                            title: Text(exerciseDetail
+                                                    .exercise?.name ??
+                                                'Exercise ${exerciseDetail.exerciseId}'),
+                                            subtitle: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                    'Tuần ${exerciseDetail.weekNumber}, Ngày ${exerciseDetail.dayOfWeek}'),
+                                                Text(
+                                                    '${exerciseDetail.sets} sets x ${exerciseDetail.reps} reps'),
+                                                Text(
+                                                    'Nghỉ: ${exerciseDetail.restTimeSeconds}s'),
+                                                if (exerciseDetail
+                                                    .notes.isNotEmpty)
+                                                  Text(
+                                                      'Ghi chú: ${exerciseDetail.notes}'),
+                                              ],
+                                            ),
+                                            trailing: exerciseDetail
+                                                        .exercise?.videoUrl !=
+                                                    null
+                                                ? _buildPlayButtonWithSpinner(
+                                                    exerciseDetail)
+                                                : null,
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        // Buy Now button
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () async {
+                              try {
+                                // Show loading indicator
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (BuildContext context) {
+                                    return const Center(
+                                        child: CircularProgressIndicator());
+                                  },
+                                );
+
+                                // Create subscription request
+                                final request = SubscriptionRequest(
+                                  subscriptionPlanId:
+                                      widget.plan.subscriptionPlanId,
+                                  paymentFrequency:
+                                      'Monthly', // You can make this configurable
+                                  autoRenew:
+                                      true, // You can make this configurable
+                                );
+
+                                // Call subscribe endpoint
+                                await _paymentApiService.subscribe(request);
+
+                                // Hide loading indicator
+                                Navigator.pop(context);
+
+                                // Show success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Subscription successful!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+
+                                // Navigate back or to a success page
+                                Navigator.pop(context);
+                              } catch (e) {
+                                // Hide loading indicator
+                                Navigator.pop(context);
+
+                                // Show error message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error subscribing: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text(
+                              'Đăng ký ngay',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  onPressed: () async {
-                    try {
-                      // Show loading indicator
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                ],
+              ),
+            ),
+          ),
+          if (playingVideoUrl != null) // Sticky video player
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: _toggleControls,
+                child: Stack(
+                  children: [
+                    AspectRatio(
+                      aspectRatio:
+                          _videoController?.value.aspectRatio ?? 16 / 9,
+                      child: _videoController != null &&
+                              _videoController!.value.isInitialized
+                          ? VideoPlayer(_videoController!)
+                          : Center(child: CircularProgressIndicator()),
+                    ),
+                    if (_showControls && _videoController != null)
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Container(
+                            color: Colors.black54,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    _videoController!.value.isPlaying
+                                        ? Icons.pause
+                                        : Icons.play_arrow,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      if (_videoController!.value.isPlaying) {
+                                        _videoController!.pause();
+                                      } else {
+                                        _videoController!.play();
+                                      }
+                                    });
+                                    _startHideControlsTimer();
+                                  },
+                                ),
+                                Text(
+                                  '${_formatDuration(_videoController!.value.position)} / ${_formatDuration(_videoController!.value.duration)}',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.replay,
+                                      color: Colors.white),
+                                  onPressed: () {
+                                    _videoController!
+                                        .seekTo(Duration.zero); // Replay video
+                                    _videoController!.play();
+                                    _startHideControlsTimer();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            _videoController?.pause(); // Pause video
+                            playingVideoUrl = null; // Stop playing video
+                          });
                         },
-                      );
-
-                      // Create subscription request
-                      final request = SubscriptionRequest(
-                        subscriptionPlanId: widget.plan.subscriptionPlanId,
-                        paymentFrequency:
-                            'Monthly', // You can make this configurable
-                        autoRenew: true, // You can make this configurable
-                      );
-
-                      // Call subscribe endpoint
-                      await _paymentApiService.subscribe(request);
-
-                      // Hide loading indicator
-                      Navigator.pop(context);
-
-                      // Show success message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Subscription successful!'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-
-                      // Navigate back or to a success page
-                      Navigator.pop(context);
-                    } catch (e) {
-                      // Hide loading indicator
-                      Navigator.pop(context);
-
-                      // Show error message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error subscribing: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text(
-                    'Đăng ký ngay',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayButtonWithSpinner(WorkoutPlanExercise exerciseDetail) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (playingVideoUrl == exerciseDetail.exercise?.videoUrl)
+          RotationTransition(
+            turns: _animationController!,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.blue, width: 2),
+              ),
+            ),
           ),
+        IconButton(
+          icon: Icon(Icons.play_arrow, color: Colors.blue),
+          onPressed: () {
+            setState(() {
+              playingVideoUrl = exerciseDetail.exercise?.videoUrl; // Play video
+              _videoController = VideoPlayerController.networkUrl(
+                Uri.parse(playingVideoUrl!),
+              )..initialize().then((_) {
+                  setState(() {
+                    _videoController?.play(); // Start video
+                  });
+                });
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+}
+
+// Add a widget for video controls
+class VideoControls extends StatefulWidget {
+  final VideoPlayerController controller;
+
+  const VideoControls({Key? key, required this.controller}) : super(key: key);
+
+  @override
+  _VideoControlsState createState() => _VideoControlsState();
+}
+
+class _VideoControlsState extends State<VideoControls> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        VideoProgressIndicator(
+          widget.controller,
+          allowScrubbing: true,
+          colors: VideoProgressColors(
+            playedColor: Colors.blue,
+            bufferedColor: Colors.grey,
+            backgroundColor: Colors.black,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: Icon(
+                widget.controller.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
+                color: Colors.blue,
+              ),
+              onPressed: () {
+                setState(() {
+                  if (widget.controller.value.isPlaying) {
+                    widget.controller.pause();
+                  } else {
+                    widget.controller.play();
+                  }
+                });
+              },
+            ),
+            Text(
+              '${_formatDuration(widget.controller.value.position)} / ${_formatDuration(widget.controller.value.duration)}',
+              style: TextStyle(color: Colors.black),
+            ),
+            IconButton(
+              icon: Icon(Icons.replay, color: Colors.blue),
+              onPressed: () {
+                widget.controller.seekTo(Duration.zero); // Replay video
+                widget.controller.play();
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+}
+
+// Add a reusable widget for video playback
+class VideoPlayerWidget extends StatelessWidget {
+  final String videoUrl;
+
+  const VideoPlayerWidget({Key? key, required this.videoUrl}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      child: Center(
+        child: Text(
+          'Video Player Placeholder\n$videoUrl',
+          style: TextStyle(color: Colors.white),
+          textAlign: TextAlign.center,
         ),
       ),
     );
