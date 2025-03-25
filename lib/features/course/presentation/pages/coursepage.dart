@@ -20,21 +20,21 @@ class CoursePage extends StatefulWidget {
 class _CoursePageState extends State<CoursePage> {
   String selectedCategory = 'All';
   String searchQuery = ''; // Add search query state
-  
+
   // Text controller for search field
   final TextEditingController _searchController = TextEditingController();
-  
+
   // Thay thế allCourses và filteredCourses bằng subscriptionPlans
   List<SubscriptionPlan> subscriptionPlans = [];
   List<SubscriptionPlan> filteredPlans = []; // Add filtered list
   bool isLoadingPlans = true;
-  
+
   List<MuscleGroup> muscleGroups = [];
   bool isLoadingMuscleGroups = true;
 
   final MuscleGroupApiService _muscleGroupApiService =
       MuscleGroupApiService(DioClient());
-  
+
   final SubscriptionPlanApiService _subscriptionPlanApiService =
       SubscriptionPlanApiService(DioClient());
 
@@ -43,11 +43,11 @@ class _CoursePageState extends State<CoursePage> {
     super.initState();
     fetchMuscleGroups();
     fetchSubscriptionPlans();
-    
+
     // Add listener to search controller
     _searchController.addListener(_filterBySearchQuery);
   }
-  
+
   @override
   void dispose() {
     // Clean up controller when the widget is disposed
@@ -58,7 +58,7 @@ class _CoursePageState extends State<CoursePage> {
   // Filter plans based on search query
   void _filterBySearchQuery() {
     final query = _searchController.text.toLowerCase();
-    
+
     setState(() {
       searchQuery = query;
       // The filteredPlans will be computed in the build method
@@ -79,13 +79,13 @@ class _CoursePageState extends State<CoursePage> {
       });
     }
   }
-  
+
   Future<void> fetchSubscriptionPlans() async {
     try {
       print("🔷 Fetching subscription plans...");
       final plans = await _subscriptionPlanApiService.getSubscriptionPlans();
       print("🔷 Received ${plans.length} subscription plans");
-      
+
       setState(() {
         subscriptionPlans = plans;
         isLoadingPlans = false;
@@ -110,13 +110,13 @@ class _CoursePageState extends State<CoursePage> {
     // Apply filters to get final list
     final displayedPlans = subscriptionPlans.where((plan) {
       // Apply category filter
-      final matchesCategory = selectedCategory == 'All' || 
-                             (plan.isActive ? 'Active' : 'Inactive') == selectedCategory;
-      
+      final matchesCategory = selectedCategory == 'All' ||
+          (plan.isActive ? 'Active' : 'Inactive') == selectedCategory;
+
       // Apply search filter
       final matchesSearch = searchQuery.isEmpty ||
-                           plan.name.toLowerCase().contains(searchQuery.toLowerCase());
-      
+          plan.name.toLowerCase().contains(searchQuery.toLowerCase());
+
       return matchesCategory && matchesSearch;
     }).toList();
 
@@ -157,13 +157,13 @@ class _CoursePageState extends State<CoursePage> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  suffixIcon: searchQuery.isNotEmpty 
+                  suffixIcon: searchQuery.isNotEmpty
                       ? IconButton(
                           icon: Icon(Icons.clear, color: Colors.grey),
                           onPressed: () {
                             _searchController.clear();
                           },
-                        ) 
+                        )
                       : Icon(Icons.tune, color: Colors.grey),
                   hintText: 'Tìm gói tập',
                   filled: true,
@@ -209,19 +209,19 @@ class _CoursePageState extends State<CoursePage> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Results count
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Tìm thấy ${displayedPlans.length} gói tập',
                   style: TextStyle(
-                    fontSize: 14, 
+                    fontSize: 14,
                     color: Colors.grey[600],
                   ),
                 ),
               ),
-              
+
               Expanded(
                 child: isLoadingPlans
                     ? Center(child: CircularProgressIndicator())
@@ -249,7 +249,8 @@ class _CoursePageState extends State<CoursePage> {
                         : ListView.builder(
                             itemCount: displayedPlans.length,
                             itemBuilder: (context, index) {
-                              return _buildSubscriptionPlanItem(context, displayedPlans[index]);
+                              return _buildSubscriptionPlanItem(
+                                  context, displayedPlans[index]);
                             },
                           ),
               ),
@@ -263,13 +264,14 @@ class _CoursePageState extends State<CoursePage> {
   Widget _buildCategoryCard(String title, Color color) {
     // Find the corresponding muscle group
     final muscleGroup = muscleGroups.firstWhere((group) => group.name == title);
-    
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MuscleGroupDetailPage(muscleGroup: muscleGroup),
+            builder: (context) =>
+                MuscleGroupDetailPage(muscleGroup: muscleGroup),
           ),
         );
       },
@@ -313,7 +315,8 @@ class _CoursePageState extends State<CoursePage> {
     );
   }
 
-  Widget _buildSubscriptionPlanItem(BuildContext context, SubscriptionPlan plan) {
+  Widget _buildSubscriptionPlanItem(
+      BuildContext context, SubscriptionPlan plan) {
     return GestureDetector(
       onTap: () async {
         try {
@@ -327,8 +330,9 @@ class _CoursePageState extends State<CoursePage> {
           );
 
           // Fetch detailed plan data
-          final detailedPlan = await _subscriptionPlanApiService.getSubscriptionPlanById(plan.subscriptionPlanId);
-          
+          final detailedPlan = await _subscriptionPlanApiService
+              .getSubscriptionPlanById(plan.subscriptionPlanId);
+
           // Hide loading indicator
           Navigator.pop(context);
 
@@ -342,7 +346,7 @@ class _CoursePageState extends State<CoursePage> {
         } catch (e) {
           // Hide loading indicator
           Navigator.pop(context);
-          
+
           // Show error message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -366,7 +370,8 @@ class _CoursePageState extends State<CoursePage> {
             children: [
               Text(
                 "${plan.price} đ",
-                style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
               ),
               Text(
                 plan.isActive ? "Active" : "Inactive",
@@ -392,10 +397,12 @@ class CourseDetailPage extends StatefulWidget {
 }
 
 class _CourseDetailPageState extends State<CourseDetailPage> {
-  final WorkoutPlanApiService _workoutPlanApiService = WorkoutPlanApiService(DioClient());
-  final WorkoutPlanExerciseApiService _workoutPlanExerciseApiService = WorkoutPlanExerciseApiService(DioClient());
+  final WorkoutPlanApiService _workoutPlanApiService =
+      WorkoutPlanApiService(DioClient());
+  final WorkoutPlanExerciseApiService _workoutPlanExerciseApiService =
+      WorkoutPlanExerciseApiService(DioClient());
   final PaymentApiService _paymentApiService = PaymentApiService(DioClient());
-  
+
   bool isExpanded = false;
 
   @override
@@ -421,19 +428,22 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
               Text(widget.plan.description),
               Text(
                 'Giá: ${widget.plan.price} đ',
-                style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold),
               ),
               Text('Thời hạn: ${widget.plan.durationMonths} tháng'),
-              
+
               const SizedBox(height: 20),
-              
+
               // Workout Plans
               Text(
                 'Chương trình tập',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              
+
               ListView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
@@ -444,46 +454,55 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                     title: Text(workoutPlan.name),
                     subtitle: Text('${workoutPlan.durationWeeks} tuần'),
                     onExpansionChanged: (expanded) async {
-  if (expanded) {
-    try {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const Center(child: CircularProgressIndicator());
-        },
-      );
+                      if (expanded) {
+                        try {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            },
+                          );
 
-      // Lấy chi tiết workout plan
-      final workoutPlanDetail = await _workoutPlanApiService.getWorkoutPlanById(workoutPlan.planId);
+                          // Lấy chi tiết workout plan
+                          final workoutPlanDetail = await _workoutPlanApiService
+                              .getWorkoutPlanById(workoutPlan.planId);
 
-      // Lấy chi tiết từng bài tập trong workout plan
-      List<WorkoutPlanExercise> updatedExercises = [];
-      for (var exercise in workoutPlanDetail.workoutPlanExercises) {
-        final exerciseDetail = await _workoutPlanExerciseApiService.getWorkoutPlanExerciseById(exercise.planId);
-        updatedExercises.add(exerciseDetail);
-      }
+                          // Lấy chi tiết từng bài tập trong workout plan
+                          List<WorkoutPlanExercise> updatedExercises = [];
+                          for (var exercise
+                              in workoutPlanDetail.workoutPlanExercises) {
+                            final exerciseDetail =
+                                await _workoutPlanExerciseApiService
+                                    .getWorkoutPlanExerciseById(
+                                        exercise.planId);
+                            updatedExercises.add(exerciseDetail);
+                          }
 
-      // Cập nhật lại danh sách bài tập trong workout plan
-      final updatedWorkoutPlan = workoutPlanDetail.copyWith(workoutPlanExercises: updatedExercises);
+                          // Cập nhật lại danh sách bài tập trong workout plan
+                          final updatedWorkoutPlan = workoutPlanDetail.copyWith(
+                              workoutPlanExercises: updatedExercises);
 
-      Navigator.pop(context);
+                          Navigator.pop(context);
 
-      setState(() {
-        widget.plan.workoutPlans[index] = updatedWorkoutPlan;
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading workout details: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-},
-children: [
+                          setState(() {
+                            widget.plan.workoutPlans[index] =
+                                updatedWorkoutPlan;
+                          });
+                        } catch (e) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('Error loading workout details: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    children: [
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -494,50 +513,60 @@ children: [
                             Text('Mục tiêu: ${workoutPlan.goals}'),
                             Text('Yêu cầu: ${workoutPlan.prerequisites}'),
                             const SizedBox(height: 8),
-                            
+
                             // Exercises
                             Text(
                               'Bài tập',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             ListView.builder(
-  shrinkWrap: true,
-  physics: NeverScrollableScrollPhysics(),
-  itemCount: workoutPlan.workoutPlanExercises.length,
-  itemBuilder: (context, exerciseIndex) {
-    final exerciseDetail = workoutPlan.workoutPlanExercises[exerciseIndex];
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount:
+                                  workoutPlan.workoutPlanExercises.length,
+                              itemBuilder: (context, exerciseIndex) {
+                                final exerciseDetail = workoutPlan
+                                    .workoutPlanExercises[exerciseIndex];
 
-    return ListTile(
-      leading: exerciseDetail.exercise?.imageUrl != null
-          ? Image.network(
-  exerciseDetail.exercise.imageUrl ?? 'https://example.com/default-image.png',
-  width: 50,
-  height: 50,
-  fit: BoxFit.cover,
-)
-          : null,
-      title: Text(exerciseDetail.exercise?.name ?? 'Exercise ${exerciseDetail.exerciseId}'),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Tuần ${exerciseDetail.weekNumber}, Ngày ${exerciseDetail.dayOfWeek}'),
-          Text('${exerciseDetail.sets} sets x ${exerciseDetail.reps} reps'),
-          Text('Nghỉ: ${exerciseDetail.restTimeSeconds}s'),
-          if (exerciseDetail.notes.isNotEmpty)
-            Text('Ghi chú: ${exerciseDetail.notes}'),
-        ],
-      )
-    );
-  },
-),
-],
+                                return ListTile(
+                                    leading: exerciseDetail
+                                                .exercise?.imageUrl !=
+                                            null
+                                        ? Image.network(
+                                            exerciseDetail.exercise.imageUrl ??
+                                                'https://example.com/default-image.png',
+                                            width: 50,
+                                            height: 50,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null,
+                                    title: Text(exerciseDetail.exercise?.name ??
+                                        'Exercise ${exerciseDetail.exerciseId}'),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                            'Tuần ${exerciseDetail.weekNumber}, Ngày ${exerciseDetail.dayOfWeek}'),
+                                        Text(
+                                            '${exerciseDetail.sets} sets x ${exerciseDetail.reps} reps'),
+                                        Text(
+                                            'Nghỉ: ${exerciseDetail.restTimeSeconds}s'),
+                                        if (exerciseDetail.notes.isNotEmpty)
+                                          Text(
+                                              'Ghi chú: ${exerciseDetail.notes}'),
+                                      ],
+                                    ));
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   );
                 },
               ),
-              
+
               // Buy Now button
               const SizedBox(height: 20),
               SizedBox(
@@ -557,23 +586,25 @@ children: [
                         context: context,
                         barrierDismissible: false,
                         builder: (BuildContext context) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                              child: CircularProgressIndicator());
                         },
                       );
-                  
+
                       // Create subscription request
                       final request = SubscriptionRequest(
                         subscriptionPlanId: widget.plan.subscriptionPlanId,
-                        paymentFrequency: 'Monthly', // You can make this configurable
+                        paymentFrequency:
+                            'Monthly', // You can make this configurable
                         autoRenew: true, // You can make this configurable
                       );
-                  
+
                       // Call subscribe endpoint
                       await _paymentApiService.subscribe(request);
-                  
+
                       // Hide loading indicator
                       Navigator.pop(context);
-                  
+
                       // Show success message
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -581,13 +612,13 @@ children: [
                           backgroundColor: Colors.green,
                         ),
                       );
-                  
+
                       // Navigate back or to a success page
                       Navigator.pop(context);
                     } catch (e) {
                       // Hide loading indicator
                       Navigator.pop(context);
-                  
+
                       // Show error message
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

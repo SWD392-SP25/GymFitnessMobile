@@ -7,8 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'core/firebase/notification/notification_data_source.dart';
 import 'core/firebase/notification/notification_service.dart';
 import 'core/firebase/notification/request_notification_permission.dart';
-import 'core/network/endpoints/device_token.dart';
-import 'core/network/dio_client.dart';
 import 'firebase_options.dart';
 // FlutterFire's Firebase Cloud Messaging plugin
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -27,38 +25,31 @@ void main() async {
     // Load .env file
     await dotenv.load(fileName: ".env");
     print("🌐 .env loaded successfully");
-    
+
     // Verify the API_URL value
     final apiUrl = dotenv.env['API_URL'];
     print("🌐 API_URL from .env: '$apiUrl'");
-    
+
     if (apiUrl == null || apiUrl.isEmpty) {
       print("❌ API_URL is missing or empty in .env file");
     }
   } catch (e) {
     print("❌ Error loading .env file: $e");
   }
-  
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   ); // 🔥 Đảm bảo Firebase đã khởi tạo trước khi dùng plugin khác.
 
   bool isGranted = await requestNotificationPermission();
   if (isGranted) {
-    await NotificationService.initialize(); // 🔥 Thêm await để đảm bảo hàm khởi tạo hoàn thành
+    await NotificationService
+        .initialize(); // 🔥 Thêm await để đảm bảo hàm khởi tạo hoàn thành
     NotificationDataSource notificationDataSource = NotificationDataSource();
     String? token = await notificationDataSource.getFCMToken();
 
     if (token != null) {
       print("🔥 FCM Token: $token");
-      
-      // Send token to server using DeviceTokenApiService
-      try {
-        final deviceTokenService = DeviceTokenApiService(DioClient());
-        await deviceTokenService.registerDeviceToken(token);
-      } catch (e) {
-        print("❌ Failed to register device token with server: $e");
-      }
     }
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -70,7 +61,6 @@ void main() async {
       // Hiển thị thông báo bằng local notifications
       NotificationService.showNotification(message);
     });
-
   }
 
   runApp(const ProviderScope(child: MyApp()));
@@ -93,5 +83,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-
