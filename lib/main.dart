@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'core/firebase/notification/notification_data_source.dart';
 import 'core/firebase/notification/notification_service.dart';
 import 'core/firebase/notification/request_notification_permission.dart';
+import 'core/network/endpoints/device_token.dart';
+import 'core/network/dio_client.dart';
 import 'firebase_options.dart';
 // FlutterFire's Firebase Cloud Messaging plugin
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -49,6 +51,14 @@ void main() async {
 
     if (token != null) {
       print("🔥 FCM Token: $token");
+      
+      // Send token to server using DeviceTokenApiService
+      try {
+        final deviceTokenService = DeviceTokenApiService(DioClient());
+        await deviceTokenService.registerDeviceToken(token);
+      } catch (e) {
+        print("❌ Failed to register device token with server: $e");
+      }
     }
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {

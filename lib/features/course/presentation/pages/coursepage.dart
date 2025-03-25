@@ -5,6 +5,11 @@ import 'package:gym_fitness_mobile/core/network/endpoints/muscle_group.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/subscription_plan.dart';
 import 'package:gym_fitness_mobile/features/course/presentation/pages/muscle_group_detail_page.dart';
 
+import '../../../../core/network/endpoints/workout_plan.dart';
+import '../../../../core/network/endpoints/workout_plan_exercise.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/network/endpoints/payment.dart';
+
 class CoursePage extends StatefulWidget {
   const CoursePage({super.key});
 
@@ -310,13 +315,42 @@ class _CoursePageState extends State<CoursePage> {
 
   Widget _buildSubscriptionPlanItem(BuildContext context, SubscriptionPlan plan) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CourseDetailPage(plan: plan),
-          ),
-        );
+      onTap: () async {
+        try {
+          // Show loading indicator
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return const Center(child: CircularProgressIndicator());
+            },
+          );
+
+          // Fetch detailed plan data
+          final detailedPlan = await _subscriptionPlanApiService.getSubscriptionPlanById(plan.subscriptionPlanId);
+          
+          // Hide loading indicator
+          Navigator.pop(context);
+
+          // Navigate to detail page with detailed plan data
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CourseDetailPage(plan: detailedPlan),
+            ),
+          );
+        } catch (e) {
+          // Hide loading indicator
+          Navigator.pop(context);
+          
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading plan details: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       },
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -358,6 +392,10 @@ class CourseDetailPage extends StatefulWidget {
 }
 
 class _CourseDetailPageState extends State<CourseDetailPage> {
+  final WorkoutPlanApiService _workoutPlanApiService = WorkoutPlanApiService(DioClient());
+  final WorkoutPlanExerciseApiService _workoutPlanExerciseApiService = WorkoutPlanExerciseApiService(DioClient());
+  final PaymentApiService _paymentApiService = PaymentApiService(DioClient());
+  
   bool isExpanded = false;
 
   @override
@@ -405,7 +443,47 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                   return ExpansionTile(
                     title: Text(workoutPlan.name),
                     subtitle: Text('${workoutPlan.durationWeeks} tuần'),
-                    children: [
+                    onExpansionChanged: (expanded) async {
+  if (expanded) {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      // Lấy chi tiết workout plan
+      final workoutPlanDetail = await _workoutPlanApiService.getWorkoutPlanById(workoutPlan.planId);
+
+      // Lấy chi tiết từng bài tập trong workout plan
+      List<WorkoutPlanExercise> updatedExercises = [];
+      for (var exercise in workoutPlanDetail.workoutPlanExercises) {
+        final exerciseDetail = await _workoutPlanExerciseApiService.getWorkoutPlanExerciseById(exercise.planId);
+        updatedExercises.add(exerciseDetail);
+      }
+
+      // Cập nhật lại danh sách bài tập trong workout plan
+      final updatedWorkoutPlan = workoutPlanDetail.copyWith(workoutPlanExercises: updatedExercises);
+
+      Navigator.pop(context);
+
+      setState(() {
+        widget.plan.workoutPlans[index] = updatedWorkoutPlan;
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading workout details: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+},
+children: [
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -423,27 +501,36 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: workoutPlan.workoutPlanExercises.length,
-                              itemBuilder: (context, exerciseIndex) {
-                                final exerciseDetail = workoutPlan.workoutPlanExercises[exerciseIndex];
-                                return ListTile(
-                                  title: Text(exerciseDetail.exercise.name),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Tuần ${exerciseDetail.weekNumber}, Ngày ${exerciseDetail.dayOfWeek}'),
-                                      Text('${exerciseDetail.sets} sets x ${exerciseDetail.reps} reps'),
-                                      Text('Nghỉ: ${exerciseDetail.restTimeSeconds}s'),
-                                      if (exerciseDetail.notes.isNotEmpty)
-                                        Text('Ghi chú: ${exerciseDetail.notes}'),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
+  shrinkWrap: true,
+  physics: NeverScrollableScrollPhysics(),
+  itemCount: workoutPlan.workoutPlanExercises.length,
+  itemBuilder: (context, exerciseIndex) {
+    final exerciseDetail = workoutPlan.workoutPlanExercises[exerciseIndex];
+
+    return ListTile(
+      leading: exerciseDetail.exercise?.imageUrl != null
+          ? Image.network(
+  exerciseDetail.exercise.imageUrl ?? 'https://example.com/default-image.png',
+  width: 50,
+  height: 50,
+  fit: BoxFit.cover,
+)
+          : null,
+      title: Text(exerciseDetail.exercise?.name ?? 'Exercise ${exerciseDetail.exerciseId}'),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Tuần ${exerciseDetail.weekNumber}, Ngày ${exerciseDetail.dayOfWeek}'),
+          Text('${exerciseDetail.sets} sets x ${exerciseDetail.reps} reps'),
+          Text('Nghỉ: ${exerciseDetail.restTimeSeconds}s'),
+          if (exerciseDetail.notes.isNotEmpty)
+            Text('Ghi chú: ${exerciseDetail.notes}'),
+        ],
+      )
+    );
+  },
+),
+],
                         ),
                       ),
                     ],
@@ -463,8 +550,52 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  onPressed: () {
-                    // Handle subscription purchase
+                  onPressed: () async {
+                    try {
+                      // Show loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return const Center(child: CircularProgressIndicator());
+                        },
+                      );
+                  
+                      // Create subscription request
+                      final request = SubscriptionRequest(
+                        subscriptionPlanId: widget.plan.subscriptionPlanId,
+                        paymentFrequency: 'Monthly', // You can make this configurable
+                        autoRenew: true, // You can make this configurable
+                      );
+                  
+                      // Call subscribe endpoint
+                      await _paymentApiService.subscribe(request);
+                  
+                      // Hide loading indicator
+                      Navigator.pop(context);
+                  
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Subscription successful!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                  
+                      // Navigate back or to a success page
+                      Navigator.pop(context);
+                    } catch (e) {
+                      // Hide loading indicator
+                      Navigator.pop(context);
+                  
+                      // Show error message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error subscribing: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
                   child: const Text(
                     'Đăng ký ngay',

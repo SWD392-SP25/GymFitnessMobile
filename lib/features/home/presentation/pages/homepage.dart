@@ -1,27 +1,185 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gym_fitness_mobile/core/auth/auth_provider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final DateTime _startTime = DateTime.now();
+  
+  String _getTimeSpent() {
+    final difference = DateTime.now().difference(_startTime);
+    return '${difference.inMinutes}min';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+      backgroundColor: Colors.grey[100],
+      body: SafeArea(
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              const SizedBox(height: 20),
-              _buildProgressBar(),
-              const SizedBox(height: 20),
-              _buildCourseCards(),
-              const SizedBox(height: 20),
-              _buildTrainingPlan(),
-              const SizedBox(height: 20),
-              _buildMeetupCard(),
+              // Header with user info and notification
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final authState = ref.watch(authStateProvider);
+                    
+                    return authState.when(
+                      data: (user) {
+                        final userName = user?.displayName ?? 'Guest';
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Hi, $userName',
+                                  style: const TextStyle(
+                                    fontSize: 24, 
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Text(
+                                  "Ready for your workout?",
+                                  style: TextStyle(
+                                    fontSize: 16, 
+                                    color: Colors.grey
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) => Text('Error: $error'),
+                    );
+                  },
+                ),
+              ),
+
+              // Today's Progress Card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Today's Progress",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatItem(
+                              icon: Icons.timer,
+                              value: _getTimeSpent(),
+                              label: 'Time',
+                            ),
+                            _buildStatItem(
+                              icon: Icons.local_fire_department,
+                              value: '320',
+                              label: 'Calories',
+                            ),
+                            _buildStatItem(
+                              icon: Icons.fitness_center,
+                              value: '3/5',
+                              label: 'Workouts',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Quick Actions
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Quick Actions',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildQuickActionCard(
+                            'Start Workout',
+                            Icons.play_circle_fill,
+                            Colors.blue,
+                            () {},
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildQuickActionCard(
+                            'Find Trainer',
+                            Icons.person_search,
+                            Colors.orange,
+                            () {},
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Workout Plans
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Your Plans',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('See All'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildWorkoutPlansList(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -29,29 +187,108 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Column(
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Hi, Kristin',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue),
-            ),
-            const Text(
-              "Let's start training",
-              style: TextStyle(fontSize: 16, color: Colors.black54),
-            ),
-          ],
+        Icon(icon, color: Colors.blue, size: 24),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.blue.shade100,
-          child: const Icon(Icons.person, color: Colors.blue),
-        )
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildQuickActionCard(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkoutPlansList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            leading: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.fitness_center, color: Colors.blue),
+            ),
+            title: Text(
+              'Workout Plan ${index + 1}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: (index + 1) * 0.25,
+                  backgroundColor: Colors.grey[200],
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+                const SizedBox(height: 4),
+                Text('${((index + 1) * 25)}% Complete'),
+              ],
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {},
+          ),
+        );
+      },
     );
   }
 
@@ -68,12 +305,17 @@ class HomePage extends StatelessWidget {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text('Learned today', style: TextStyle(color: Colors.black54)),
-              Text('46min / 60min', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            children: [
+              const Text('Learned today', style: TextStyle(color: Colors.black54)),
+              Text(
+                '${_getTimeSpent()} / 60min',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+              ),
             ],
           ),
-          Text('My courses', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold))
+          const Text('My courses', 
+            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)
+          )
         ],
       ),
     );

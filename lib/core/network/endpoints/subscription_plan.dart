@@ -6,6 +6,7 @@ import '../dio_exceptions.dart';
 class SubscriptionPlanEndpoints {
   static const String basePath = '/SubscriptionPlan';
   static const String getPlans = basePath;
+  static const String getPlanById = '$basePath/'; // Will be concatenated with ID
 }
 
 // Model cho Subscription Plan
@@ -18,6 +19,7 @@ class Exercise {
   final int difficultyLevel;
   final String equipmentNeeded;
   final String videoUrl;
+    final String? imageUrl; // 👉 Thêm thuộc tính imageUrl
 
   Exercise({
     required this.exerciseId,
@@ -28,6 +30,7 @@ class Exercise {
     required this.difficultyLevel,
     required this.equipmentNeeded,
     required this.videoUrl,
+    this.imageUrl
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -77,7 +80,18 @@ class WorkoutPlanExercise {
       reps: json['reps'],
       restTimeSeconds: json['restTimeSeconds'],
       notes: json['notes'] ?? '',
-      exercise: Exercise.fromJson(json['exercise']),
+      exercise: json['exercise'] != null 
+          ? Exercise.fromJson(json['exercise'])
+          : Exercise(
+              exerciseId: json['exerciseId'],
+              name: 'Exercise ${json['exerciseId']}',
+              description: '',
+              muscleGroupId: 0,
+              categoryId: 0,
+              difficultyLevel: 0,
+              equipmentNeeded: '',
+              videoUrl: '',
+            ),
     );
   }
 }
@@ -110,6 +124,39 @@ class WorkoutPlan {
     required this.subscriptionPlanId,
     required this.workoutPlanExercises,
   });
+
+  /// 👉 Thêm phương thức copyWith()
+  WorkoutPlan copyWith({
+    int? planId,
+    String? name,
+    String? description,
+    int? difficultyLevel,
+    int? durationWeeks,
+    String? createdBy,
+    String? targetAudience,
+    String? goals,
+    String? prerequisites,
+    DateTime? createdAt,
+    int? subscriptionPlanId,
+    List<WorkoutPlanExercise>? workoutPlanExercises,
+  }) {
+    return WorkoutPlan(
+      planId: planId ?? this.planId,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      difficultyLevel: difficultyLevel ?? this.difficultyLevel,
+      durationWeeks: durationWeeks ?? this.durationWeeks,
+      createdBy: createdBy ?? this.createdBy,
+      targetAudience: targetAudience ?? this.targetAudience,
+      goals: goals ?? this.goals,
+      prerequisites: prerequisites ?? this.prerequisites,
+      createdAt: createdAt ?? this.createdAt,
+      subscriptionPlanId: subscriptionPlanId ?? this.subscriptionPlanId,
+      workoutPlanExercises: workoutPlanExercises ?? this.workoutPlanExercises,
+    );
+  }
+
+
 
   factory WorkoutPlan.fromJson(Map<String, dynamic> json) {
     return WorkoutPlan(
@@ -185,6 +232,20 @@ class SubscriptionPlanApiService {
       return (response.data as List)
           .map((item) => SubscriptionPlan.fromJson(item))
           .toList();
+    } on DioException catch (e) {
+      final errorMessage = DioExceptions.fromDioError(e).toString();
+      throw errorMessage;
+    }
+  }
+
+  // New method to get subscription plan by ID
+  Future<SubscriptionPlan> getSubscriptionPlanById(int id) async {
+    try {
+      final response = await _dioClient.get('${SubscriptionPlanEndpoints.getPlanById}$id');
+      
+      print('Subscription Plan Detail API Response: ${response.data}');
+      
+      return SubscriptionPlan.fromJson(response.data);
     } on DioException catch (e) {
       final errorMessage = DioExceptions.fromDioError(e).toString();
       throw errorMessage;
