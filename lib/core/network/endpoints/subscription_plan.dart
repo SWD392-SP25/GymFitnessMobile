@@ -6,7 +6,8 @@ import '../dio_exceptions.dart';
 class SubscriptionPlanEndpoints {
   static const String basePath = '/SubscriptionPlan';
   static const String getPlans = basePath;
-  static const String getPlanById = '$basePath/'; // Will be concatenated with ID
+  static const String getPlanById =
+      '$basePath/'; // Will be concatenated with ID
 }
 
 // Model cho Subscription Plan
@@ -19,19 +20,18 @@ class Exercise {
   final int difficultyLevel;
   final String equipmentNeeded;
   final String videoUrl;
-    final String? imageUrl; // 👉 Thêm thuộc tính imageUrl
+  final String? imageUrl; // 👉 Thêm thuộc tính imageUrl
 
-  Exercise({
-    required this.exerciseId,
-    required this.name,
-    required this.description,
-    required this.muscleGroupId,
-    required this.categoryId,
-    required this.difficultyLevel,
-    required this.equipmentNeeded,
-    required this.videoUrl,
-    this.imageUrl
-  });
+  Exercise(
+      {required this.exerciseId,
+      required this.name,
+      required this.description,
+      required this.muscleGroupId,
+      required this.categoryId,
+      required this.difficultyLevel,
+      required this.equipmentNeeded,
+      required this.videoUrl,
+      this.imageUrl});
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
     return Exercise(
@@ -80,7 +80,7 @@ class WorkoutPlanExercise {
       reps: json['reps'],
       restTimeSeconds: json['restTimeSeconds'],
       notes: json['notes'] ?? '',
-      exercise: json['exercise'] != null 
+      exercise: json['exercise'] != null
           ? Exercise.fromJson(json['exercise'])
           : Exercise(
               exerciseId: json['exerciseId'],
@@ -156,8 +156,6 @@ class WorkoutPlan {
     );
   }
 
-
-
   factory WorkoutPlan.fromJson(Map<String, dynamic> json) {
     return WorkoutPlan(
       planId: json['planId'],
@@ -172,8 +170,9 @@ class WorkoutPlan {
       createdAt: DateTime.parse(json['createdAt']),
       subscriptionPlanId: json['subscriptionPlanId'],
       workoutPlanExercises: (json['workoutPlanExercises'] as List?)
-          ?.map((e) => WorkoutPlanExercise.fromJson(e))
-          .toList() ?? [],
+              ?.map((e) => WorkoutPlanExercise.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -209,8 +208,9 @@ class SubscriptionPlan {
       isActive: json['isActive'],
       createdAt: DateTime.parse(json['createdAt']),
       workoutPlans: (json['workoutPlans'] as List?)
-          ?.map((e) => WorkoutPlan.fromJson(e))
-          .toList() ?? [],
+              ?.map((e) => WorkoutPlan.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -241,10 +241,11 @@ class SubscriptionPlanApiService {
   // New method to get subscription plan by ID
   Future<SubscriptionPlan> getSubscriptionPlanById(int id) async {
     try {
-      final response = await _dioClient.get('${SubscriptionPlanEndpoints.getPlanById}$id');
-      
+      final response =
+          await _dioClient.get('${SubscriptionPlanEndpoints.getPlanById}$id');
+
       print('Subscription Plan Detail API Response: ${response.data}');
-      
+
       return SubscriptionPlan.fromJson(response.data);
     } on DioException catch (e) {
       final errorMessage = DioExceptions.fromDioError(e).toString();

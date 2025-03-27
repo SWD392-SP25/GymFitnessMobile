@@ -2,29 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:gym_fitness_mobile/core/network/dio_client.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/chat_api_service.dart';
 import 'package:dio/dio.dart'; // Add this import
+import 'package:gym_fitness_mobile/core/network/endpoints/staff_api_service.dart'; // Add this import
 
 class Message {
   final String content;
   final String sender;
 
   Message({required this.content, required this.sender});
-}
-
-class Staff {
-  final String id;
-  final String name;
-  final String imageUrl;
-
-  Staff({required this.id, required this.name, required this.imageUrl});
-
-  factory Staff.fromJson(Map<String, dynamic> json) {
-    return Staff(
-      id: json['staffId'],
-      name: json['email'], // Use email as the name
-      imageUrl: json['imageUrl'] ??
-          'https://via.placeholder.com/150', // Default image if null
-    );
-  }
 }
 
 class ChatPage extends StatefulWidget {
@@ -49,6 +33,8 @@ class _ChatPageState extends State<ChatPage> {
 
   final TextEditingController _controller = TextEditingController();
   final ChatApiService _chatApiService = ChatApiService(DioClient().dio);
+  final StaffApiService _staffApiService =
+      StaffApiService(DioClient()); // Add StaffApiService instance
 
   @override
   void initState() {
@@ -61,25 +47,17 @@ class _ChatPageState extends State<ChatPage> {
       List<Staff> fetchedStaffList = [];
       for (String staffId in staffIds) {
         print("🔍 Fetching staff details for ID: $staffId");
-        final response = await DioClient().dio.get(
-              '/api/Staff/$staffId',
-              queryParameters: null,
-              options: Options(
-                headers: {
-                  'Authorization':
-                      'Bearer YOUR_TOKEN_HERE', // Replace with actual token
-                },
-              ),
-            );
-        print("✅ Staff Data: ${response.data}");
-        fetchedStaffList.add(Staff.fromJson(response.data));
+        final staffData =
+            await _staffApiService.getStaffById(staffId); // Use StaffApiService
+        print("✅ Staff Data: $staffData");
+        fetchedStaffList.add(staffData);
       }
 
       setState(() {
         staffList = fetchedStaffList;
-        selectedStaffId = staffList.isNotEmpty ? staffList[0].id : null;
+        selectedStaffId = staffList.isNotEmpty ? staffList[0].staffId : null;
         for (var staff in staffList) {
-          staffMessages[staff.id] = [];
+          staffMessages[staff.staffId] = [];
         }
         _fetchChatHistory();
       });
@@ -126,7 +104,7 @@ class _ChatPageState extends State<ChatPage> {
         receiverId: selectedStaffId!,
         message: messageContent,
         messageType: 'text',
-        token: token, // Pass token
+        token: "token", // Pass token
       );
 
       setState(() {
@@ -171,7 +149,7 @@ class _ChatPageState extends State<ChatPage> {
                 return GestureDetector(
                   onTap: () {
                     setState(() {
-                      selectedStaffId = staff.id;
+                      selectedStaffId = staff.staffId;
                       _fetchChatHistory();
                     });
                   },
@@ -181,13 +159,14 @@ class _ChatPageState extends State<ChatPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircleAvatar(
-                          backgroundImage: NetworkImage(staff.imageUrl),
+                          backgroundImage: NetworkImage(
+                              'https://images.pexels.com/photos/1229356/pexels-photo-1229356.jpeg'),
                         ),
                         SizedBox(height: 5),
                         Text(
-                          staff.name,
+                          (staff.lastName ?? " "),
                           style: TextStyle(
-                              color: selectedStaffId == staff.id
+                              color: selectedStaffId == staff.staffId
                                   ? Colors.blue
                                   : Colors.black),
                         ),
@@ -213,18 +192,15 @@ class _ChatPageState extends State<ChatPage> {
                         children: [
                           CircleAvatar(
                             backgroundImage: NetworkImage(
-                              staffList
-                                  .firstWhere(
-                                      (staff) => staff.id == selectedStaffId!)
-                                  .imageUrl,
-                            ),
+                                'https://images.pexels.com/photos/1229356/pexels-photo-1229356.jpeg'),
                           ),
                           SizedBox(width: 10),
                           Text(
                             staffList
-                                .firstWhere(
-                                    (staff) => staff.id == selectedStaffId!)
-                                .name,
+                                    .firstWhere((staff) =>
+                                        staff.staffId == selectedStaffId!)
+                                    .lastName ??
+                                '',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 18),
                           ),
