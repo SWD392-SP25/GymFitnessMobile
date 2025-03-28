@@ -195,6 +195,7 @@ class SubscriptionPlan {
   final bool isActive;
   final DateTime createdAt;
   final List<WorkoutPlan> workoutPlans;
+  int subscriptionId;
 
   SubscriptionPlan({
     required this.subscriptionPlanId,
@@ -205,6 +206,7 @@ class SubscriptionPlan {
     required this.isActive,
     required this.createdAt,
     required this.workoutPlans,
+    this.subscriptionId = 0,
   });
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
@@ -234,10 +236,6 @@ class SubscriptionPlanApiService {
   Future<List<SubscriptionPlan>> getSubscriptionPlans() async {
     try {
       final response = await _dioClient.get(SubscriptionPlanEndpoints.getPlans);
-
-      // Log dữ liệu nhận được
-      print('Subscription Plan API Response: ${response.data}');
-
       return (response.data as List)
           .map((item) => SubscriptionPlan.fromJson(item))
           .toList();
@@ -250,11 +248,7 @@ class SubscriptionPlanApiService {
   // New method to get subscription plan by ID
   Future<SubscriptionPlan> getSubscriptionPlanById(int id) async {
     try {
-      final response =
-          await _dioClient.get('${SubscriptionPlanEndpoints.getPlanById}$id');
-
-      print('Subscription Plan Detail API Response: ${response.data}');
-
+      final response = await _dioClient.get('${SubscriptionPlanEndpoints.getPlanById}$id');      
       return SubscriptionPlan.fromJson(response.data);
     } on DioException catch (e) {
       final errorMessage = DioExceptions.fromDioError(e).toString();

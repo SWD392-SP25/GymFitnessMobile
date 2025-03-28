@@ -3,6 +3,9 @@ import 'package:gym_fitness_mobile/core/network/dio_client.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/chat_api_service.dart';
 import 'package:dio/dio.dart'; // Add this import
 import 'package:gym_fitness_mobile/core/network/endpoints/staff_api_service.dart'; // Add this import
+import 'dart:convert'; // Để sử dụng json, utf8, base64Url
+import 'package:shared_preferences/shared_preferences.dart'; // Để sử dụng SharedPreferences
+
 
 class Message {
   final String content;
@@ -19,50 +22,36 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  final List<String> staffIds = [
-    "C946AC9B-6F8D-4452-B339-26ADCCF3F96A",
-    "C8F1475F-D642-4827-8E1B-8453F22850EC",
-    "9E0EFE3F-DAC8-4ABA-8661-CE61506B2DF2",
-    "A8979074-1503-40C8-8122-F790A3E9EAE7"
-  ];
-
   List<Staff> staffList = [];
   String? selectedStaffId;
-
   Map<String, List<Message>> staffMessages = {};
 
   final TextEditingController _controller = TextEditingController();
   final ChatApiService _chatApiService = ChatApiService(DioClient().dio);
-  final StaffApiService _staffApiService =
-      StaffApiService(DioClient()); // Add StaffApiService instance
+  final StaffApiService _staffApiService = StaffApiService(DioClient());
 
   @override
   void initState() {
     super.initState();
-    _fetchStaffDetails();
+    _fetchAllStaff();
   }
 
-  Future<void> _fetchStaffDetails() async {
+  Future<void> _fetchAllStaff() async {
     try {
-      List<Staff> fetchedStaffList = [];
-      for (String staffId in staffIds) {
-        print("🔍 Fetching staff details for ID: $staffId");
-        final staffData =
-            await _staffApiService.getStaffById(staffId); // Use StaffApiService
-        print("✅ Staff Data: $staffData");
-        fetchedStaffList.add(staffData);
-      }
-
+      final fetchedStaffList = await _staffApiService.getAllStaff();
+      
       setState(() {
         staffList = fetchedStaffList;
         selectedStaffId = staffList.isNotEmpty ? staffList[0].staffId : null;
         for (var staff in staffList) {
           staffMessages[staff.staffId] = [];
         }
-        _fetchChatHistory();
+        if (selectedStaffId != null) {
+          _fetchChatHistory();
+        }
       });
     } catch (e) {
-      print('❌ Error fetching staff details: $e');
+      print('❌ Error fetching staff list: $e');
     }
   }
 
@@ -70,25 +59,33 @@ class _ChatPageState extends State<ChatPage> {
     if (selectedStaffId == null) return;
 
     try {
-      final token =
-          'YOUR_TOKEN_HERE'; // Replace with actual token retrieval logic
-      final userId = 'user-id-placeholder'; // Replace with actual user ID
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+      final token = prefs.getString('idToken');
+      
+      if (userId == null) {
+        print('❌ No user ID found');
+        return;
+      }
+
+      print('👤 User ID: $userId');
+
       final chatHistory = await _chatApiService.getChatHistory(
         userId,
         selectedStaffId!,
-        token: token, // Pass token
+        token: token,
       );
 
       setState(() {
         staffMessages[selectedStaffId!] = chatHistory
             .map((message) => Message(
-                  content: message['message'],
-                  sender: message['senderId'] == userId ? 'User' : 'PT',
+                  content: message['messageText'] ?? '', // Changed from 'message' to 'messageText'
+                  sender: message['isUserMessage'] == true ? 'User' : 'PT', // Changed to use isUserMessage flag
                 ))
             .toList();
       });
     } catch (e) {
-      print('Error fetching chat history: $e');
+      print('❌ Error fetching chat history: $e');
     }
   }
 
@@ -96,7 +93,15 @@ class _ChatPageState extends State<ChatPage> {
     if (_controller.text.isEmpty || selectedStaffId == null) return;
 
     try {
-      final userId = 'user-id-placeholder'; // Replace with actual user ID
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+      final token = prefs.getString('idToken');
+      
+      if (userId == null) {
+        print('❌ No user ID found');
+        return;
+      }
+
       final messageContent = _controller.text;
 
       await _chatApiService.sendMessage(
@@ -104,7 +109,7 @@ class _ChatPageState extends State<ChatPage> {
         receiverId: selectedStaffId!,
         message: messageContent,
         messageType: 'text',
-        token: "token", // Pass token
+        token: token,
       );
 
       setState(() {
@@ -113,7 +118,7 @@ class _ChatPageState extends State<ChatPage> {
         _controller.clear();
       });
     } catch (e) {
-      print('Error sending message: $e');
+      print('❌ Error sending message: $e');
     }
   }
 
@@ -121,9 +126,14 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat with PT', style: TextStyle(color: Colors.white)),
+        title: Text(
+          selectedStaffId != null
+              ? 'Chat with ${staffList.firstWhere((staff) => staff.staffId == selectedStaffId!).email}'
+              : 'Chat',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Color(0xFF4A43EC),
-        automaticallyImplyLeading: false, // Remove back arrow
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
@@ -164,11 +174,14 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                         SizedBox(height: 5),
                         Text(
-                          (staff.lastName ?? " "),
+                          staff.email, // Changed from lastName to email
                           style: TextStyle(
-                              color: selectedStaffId == staff.staffId
-                                  ? Colors.blue
-                                  : Colors.black),
+                            color: selectedStaffId == staff.staffId
+                                ? Colors.blue
+                                : Colors.black,
+                            fontSize: 12, // Added to ensure text fits
+                            overflow: TextOverflow.ellipsis, // Handle long emails
+                          ),
                         ),
                       ],
                     ),

@@ -17,7 +17,6 @@ class WorkoutPlanApiService {
  Future<List<WorkoutPlan>> getWorkoutPlans() async {
   try {
     final response = await _dioClient.get(WorkoutPlanEndpoints.getWorkoutPlans);
-    print('Workout Plans API Response: ${response.data}');
 
     if (response.data == null || response.data is! List) {
       throw Exception("Workout Plans API returned invalid data: ${response.data}");
@@ -36,9 +35,7 @@ class WorkoutPlanApiService {
   Future<WorkoutPlan> getWorkoutPlanById(int id) async {
   try {
     final response = await _dioClient.get('${WorkoutPlanEndpoints.getWorkoutPlanById}$id');
-    
-    print('Workout Plan Detail API Response: ${response.data}'); // Debug log
-    
+        
     if (response.data == null) {
       throw Exception("Error: API returned null data for WorkoutPlan ID: $id");
     }

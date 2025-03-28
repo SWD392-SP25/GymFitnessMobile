@@ -10,7 +10,7 @@ class ChatApiService {
       {required String? token}) async {
     try {
       final response = await _dio.get(
-        '/api/Chat/history/$userId/$staffId',
+        '/Chat/history/$userId/$staffId',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token', // Use token
@@ -28,7 +28,7 @@ class ChatApiService {
     required String receiverId,
     required String message,
     required String messageType,
-    required String? token, // Accept token
+    required String? token,
   }) async {
     try {
       final requestBody = {
@@ -38,11 +38,12 @@ class ChatApiService {
         "messageType": messageType,
       };
       await _dio.post(
-        '/api/Chat/send',
+        '/Chat/send', // Updated endpoint path
         data: requestBody,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $token', // Use token
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json-patch+json', // Added Content-Type header
           },
         ),
       );
