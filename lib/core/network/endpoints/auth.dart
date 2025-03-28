@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../dio_client.dart';
 import '../dio_exceptions.dart';
 
@@ -68,7 +69,6 @@ class AuthApiService {
   // Login với firebase idToken
 Future<AuthResponse> login(String firebaseToken) async {
   try {
-    // Log base URL and endpoint details
     final baseUrl = _dioClient.dio.options.baseUrl;
     final endpoint = AuthEndpoints.login;
     final fullUrl = "$baseUrl$endpoint";
@@ -77,16 +77,23 @@ Future<AuthResponse> login(String firebaseToken) async {
     print("🌐 Endpoint: '$endpoint'");
     print("🌐 Full login URL: '$fullUrl'");
     
-    // Log request payload
     print("🔑 Login payload: {'idToken': ${firebaseToken}...}");
 
     final response = await _dioClient.post(AuthEndpoints.login, data: {
       'idToken': firebaseToken,
     });
 
-    return AuthResponse.fromJson(response.data);
+    final authResponse = AuthResponse.fromJson(response.data);
+    
+    // Store both token and user ID
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('idToken', firebaseToken);
+    await prefs.setString('userId', authResponse.id);
+    
+    print("👤 User ID stored: ${authResponse.id}");
+
+    return authResponse;
   } on DioException catch (e) {
-    // Log detailed error information
     print("🔴 API call failed URL: '${e.requestOptions.uri}'");
     print("🔴 baseUrl: '${e.requestOptions.baseUrl}'");
     print("🔴 path: '${e.requestOptions.path}'");
