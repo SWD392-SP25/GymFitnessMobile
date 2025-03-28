@@ -239,15 +239,11 @@ class SubscriptionPlanApiService {
   // New method to get subscription plan by ID
   Future<SubscriptionPlan> getSubscriptionPlanById(int id) async {
     try {
-<<<<<<< Updated upstream
       final response =
           await _dioClient.get('${SubscriptionPlanEndpoints.getPlanById}$id');
 
       print('Subscription Plan Detail API Response: ${response.data}');
-
-=======
       final response = await _dioClient.get('${SubscriptionPlanEndpoints.getPlanById}$id');      
->>>>>>> Stashed changes
       return SubscriptionPlan.fromJson(response.data);
     } on DioException catch (e) {
       final errorMessage = DioExceptions.fromDioError(e).toString();
