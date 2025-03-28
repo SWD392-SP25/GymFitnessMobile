@@ -35,12 +35,12 @@ class Exercise {
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
     return Exercise(
-      exerciseId: json['exerciseId'],
+      exerciseId: json['exerciseId'] ?? -1,
       name: json['name'],
       description: json['description'],
-      muscleGroupId: json['muscleGroupId'],
-      categoryId: json['categoryId'],
-      difficultyLevel: json['difficultyLevel'],
+      muscleGroupId: json['muscleGroupId'] ?? -1,
+      categoryId: json['categoryId'] ?? -1,
+      difficultyLevel: json['difficultyLevel'] ?? -1,
       equipmentNeeded: json['equipmentNeeded'],
       videoUrl: json['videoUrl'] ?? '',
     );
@@ -72,13 +72,13 @@ class WorkoutPlanExercise {
 
   factory WorkoutPlanExercise.fromJson(Map<String, dynamic> json) {
     return WorkoutPlanExercise(
-      planId: json['planId'],
-      exerciseId: json['exerciseId'],
-      weekNumber: json['weekNumber'],
-      dayOfWeek: json['dayOfWeek'],
-      sets: json['sets'],
-      reps: json['reps'],
-      restTimeSeconds: json['restTimeSeconds'],
+      planId: json['planId'] ?? -1,
+      exerciseId: json['exerciseId'] ?? -1,
+      weekNumber: json['weekNumber'] ?? -1,
+      dayOfWeek: json['dayOfWeek'] ?? -1,
+      sets: json['sets'] ?? -1,
+      reps: json['reps'] ?? -1,
+      restTimeSeconds: json['restTimeSeconds'] ?? -1,
       notes: json['notes'] ?? '',
       exercise: json['exercise'] != null
           ? Exercise.fromJson(json['exercise'])
@@ -93,6 +93,11 @@ class WorkoutPlanExercise {
               videoUrl: '',
             ),
     );
+  }
+
+  @override
+  String toString() {
+    return 'WorkoutPlanExercise(name: ${exercise.name}, videoUrl: ${exercise.videoUrl}, weekNumber: $weekNumber, dayOfWeek: $dayOfWeek, sets: $sets, reps: $reps, restTimeSeconds: $restTimeSeconds, notes: $notes)';
   }
 }
 
@@ -158,17 +163,21 @@ class WorkoutPlan {
 
   factory WorkoutPlan.fromJson(Map<String, dynamic> json) {
     return WorkoutPlan(
-      planId: json['planId'],
-      name: json['name'],
-      description: json['description'],
-      difficultyLevel: json['difficultyLevel'],
-      durationWeeks: json['durationWeeks'],
-      createdBy: json['createdBy'],
-      targetAudience: json['targetAudience'],
-      goals: json['goals'],
-      prerequisites: json['prerequisites'],
-      createdAt: DateTime.parse(json['createdAt']),
-      subscriptionPlanId: json['subscriptionPlanId'],
+      planId: json['planId'] ?? -1,
+      name: json['planName'] ?? 'Unknown Plan', // ✅ Đổi từ 'name' -> 'planName'
+      description: json['plantDescription'] ??
+          'No description available', // ✅ Đổi từ 'description' -> 'plantDescription'
+      difficultyLevel: json['difficultyLevel'] ?? -1,
+      durationWeeks: json['durationWeeks'] ?? -1,
+      createdBy: json['staffEmail'] ??
+          'Unknown', // ✅ Vì 'createdBy' không có, dùng 'staffEmail' thay thế
+      targetAudience: json['targetAudience'] ?? 'General Audience',
+      goals: json['goals'] ?? 'No goals specified',
+      prerequisites: json['prerequisites'] ?? 'No prerequisites required',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      subscriptionPlanId: json['subscriptionPlanId'] ?? -1,
       workoutPlanExercises: (json['workoutPlanExercises'] as List?)
               ?.map((e) => WorkoutPlanExercise.fromJson(e))
               .toList() ??
@@ -200,7 +209,7 @@ class SubscriptionPlan {
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
     return SubscriptionPlan(
-      subscriptionPlanId: json['subscriptionPlanId'],
+      subscriptionPlanId: json['subscriptionPlanId'] ?? 1,
       name: json['name'],
       description: json['description'],
       price: json['price'],

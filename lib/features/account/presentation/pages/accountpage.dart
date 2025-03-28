@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart'; // Add this import
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:gym_fitness_mobile/features/account/presentation/pages/subscription_plan_page.dart';
+
 import '../../../../core/auth/auth_provider.dart';
 
 // Change idTokenProvider to fcmTokenProvider
@@ -27,13 +29,15 @@ class AccountPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).value;
-    final fcmToken = ref.watch(fcmTokenProvider); // Change from idToken to fcmToken
+    final fcmToken =
+        ref.watch(fcmTokenProvider); // Change from idToken to fcmToken
     final idToken = ref.watch(idTokenProvider);
     final isLoggedIn = user != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Account", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Account",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -59,7 +63,7 @@ class AccountPage extends ConsumerWidget {
             isLoggedIn ? user.displayName ?? "No Name" : "Guest",
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-            const SizedBox(height: 10),
+          const SizedBox(height: 10),
           fcmToken.when(
             data: (token) {
               return Padding(
@@ -73,9 +77,11 @@ class AccountPage extends ConsumerWidget {
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.copy),
                       onPressed: () {
-                        Clipboard.setData(ClipboardData(text: token ?? 'Không có FCM Token'));
+                        Clipboard.setData(
+                            ClipboardData(text: token ?? 'Không có FCM Token'));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Đã sao chép Firebase Token")),
+                          const SnackBar(
+                              content: Text("Đã sao chép Firebase Token")),
                         );
                       },
                     ),
@@ -103,7 +109,8 @@ class AccountPage extends ConsumerWidget {
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.copy),
                       onPressed: () {
-                        Clipboard.setData(ClipboardData(text: token ?? 'Không có ID Token'));
+                        Clipboard.setData(
+                            ClipboardData(text: token ?? 'Không có ID Token'));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Đã sao chép ID Token")),
                         );
@@ -125,7 +132,13 @@ class AccountPage extends ConsumerWidget {
             child: ListView(
               children: [
                 if (isLoggedIn) ...[
-                  _buildListTile(Icons.book, "My Courses", () {}),
+                  _buildListTile(Icons.book, "My Courses", () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SubscriptionPlanPage()),
+                    );
+                  }),
                   _buildListTile(Icons.edit, "Edit Account", () {}),
                   _buildListTile(Icons.settings, "Settings and Privacy", () {}),
                   const Divider(thickness: 1),
@@ -134,7 +147,9 @@ class AccountPage extends ConsumerWidget {
                   }, color: Colors.redAccent),
                 ] else ...[
                   _buildListTile(Icons.login, "Sign In with Google", () {
-                    ref.read(authControllerProvider.notifier).signInWithGoogle();
+                    ref
+                        .read(authControllerProvider.notifier)
+                        .signInWithGoogle();
                   }, color: Colors.blue),
                 ],
               ],
@@ -146,11 +161,13 @@ class AccountPage extends ConsumerWidget {
   }
 
   // Widget tạo ListTile có tùy chọn màu
-  Widget _buildListTile(IconData icon, String title, VoidCallback onTap, {Color color = Colors.black54}) {
+  Widget _buildListTile(IconData icon, String title, VoidCallback onTap,
+      {Color color = Colors.black54}) {
     return ListTile(
       leading: Icon(icon, color: color),
       title: Text(title, style: TextStyle(fontSize: 16, color: color)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black54),
+      trailing:
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black54),
       onTap: onTap,
     );
   }
