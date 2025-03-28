@@ -54,10 +54,16 @@ class DioClient {
   Dio get dio => _dio;
 
   // Improved utility methods with better logging
-  Future<Response> post(String path, {dynamic data}) {
+  // Future<Response> post(String path, {dynamic data}) {
+  //   final fullUrl = "${_dio.options.baseUrl}$path";
+  //   print("🔹 POST request to: '$fullUrl'");
+  //   return _dio.post(path, data: data);
+  // }
+
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) {
     final fullUrl = "${_dio.options.baseUrl}$path";
     print("🔹 POST request to: '$fullUrl'");
-    return _dio.post(path, data: data);
+    return _dio.post(path, data: data, queryParameters: queryParameters);
   }
 
   Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {

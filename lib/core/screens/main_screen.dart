@@ -4,6 +4,7 @@ import 'package:gym_fitness_mobile/features/home/presentation/pages/homepage.dar
 import 'package:gym_fitness_mobile/features/course/presentation/pages/coursepage.dart';
 import 'package:gym_fitness_mobile/features/chat/presentation/pages/chatpage.dart';
 import 'package:gym_fitness_mobile/features/account/presentation/pages/accountpage.dart';
+import 'package:gym_fitness_mobile/features/payment/presentation/success.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -20,6 +21,7 @@ class _MainScreenState extends State<MainScreen> {
     AppointmentPage(),
     ChatPage(),
     AccountPage(),
+    // Remove PaymentSuccessPage from here
   ];
 
   void _onItemTapped(int index) {

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_fitness_mobile/core/navigation/routes.dart';
 import 'package:gym_fitness_mobile/core/network/dio_client.dart';
@@ -425,13 +427,102 @@ class _CourseDetailPageState extends State<CourseDetailPage>
   AnimationController?
       _animationController; // Controller for spinning animation
 
+ bool _hasProcessedInitialUri = false; // Add this flag
+
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(); // Repeat animation
+    
+    // Initialize AppLinks
+    final appLinks = AppLinks();
+    
+    // Listen to incoming links
+    appLinks.uriLinkStream.listen((Uri? uri) {
+      if (uri != null) {
+        print('🔷 Incoming URI: $uri');
+        _handlePayPalReturn(uri);
+      }
+    }, onError: (err) {
+      print('❌ Error handling URI: $err');
+    });
+
+    // Check for initial URI only once
+    if (!_hasProcessedInitialUri) {
+      appLinks.getInitialLink().then((Uri? uri) {
+        if (uri != null) {
+          print('🔷 Initial URI: $uri');
+          _handlePayPalReturn(uri);
+          _hasProcessedInitialUri = true;
+        }
+      });
+    }
+  }
+
+      void _handlePayPalReturn(Uri uri) async {
+        // Add check to prevent duplicate processing
+    if (!mounted || !uri.queryParameters.containsKey('paymentId') || !uri.queryParameters.containsKey('PayerID')) {
+      return;
+    }
+    if (uri.scheme == 'gymfitness' && uri.host == 'paypal-return') {
+      try {
+        final paymentId = uri.queryParameters['paymentId'];
+        final payerId = uri.queryParameters['PayerID'];
+        
+        print('🔷 Payment ID: $paymentId');
+        print('🔷 Payer ID: $payerId');
+        print('🛣️ Attempting to navigate to: ${AppRoutes.paymentSuccess}');
+
+        if (paymentId != null && payerId != null && mounted) {
+          if (!mounted) return;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return const Center(child: CircularProgressIndicator());
+            },
+          );
+
+          try {
+            await _paymentApiService.executePayment(
+              paymentId: paymentId,
+              payerId: payerId,
+              subscriptionId: widget.plan.subscriptionId.toString(),
+            );
+
+            if (!mounted) return;
+
+            // Hide loading dialog
+            Navigator.pop(context);
+
+            print('🛣️ Attempting to navigate to: ${AppRoutes.paymentSuccess}');
+            // Navigate to payment success page instead of main screen
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.paymentSuccess,
+              (route) => false,
+            ).then((_) {
+              print('🛣️ Navigation to success page completed');
+            }).catchError((error) {
+              print('❌ Navigation error: $error');
+            });
+          } catch (e) {
+            if (!mounted) return;
+            Navigator.pop(context);
+            throw e;
+          }
+        }
+      } catch (e) {
+        print('🔷 Error executing payment: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error completing payment: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -689,7 +780,33 @@ class _CourseDetailPageState extends State<CourseDetailPage>
                                 );
 
                                 // Call subscribe endpoint
-                                await _paymentApiService.subscribe(request);
+                                final response =
+                                    await _paymentApiService.subscribe(request);
+
+                                // Store the subscriptionId in a variable
+                                final subscriptionId =
+                                    response['subscriptionId']?.toString();
+
+                                // Open payment URL in browser
+                                if (response != null &&
+                                    response['paymentUrl'] != null) {
+                                  final Uri url =
+                                      Uri.parse(response['paymentUrl']);
+                                  if (await canLaunchUrl(url)) {
+                                    // Store subscriptionId for later use
+                                    setState(() {
+                                      widget.plan.subscriptionId =
+                                          int.parse(subscriptionId!);
+                                    });
+
+                                    await launchUrl(
+                                      url,
+                                      mode: LaunchMode.platformDefault,
+                                    );
+                                  } else {
+                                    throw 'Could not launch payment URL';
+                                  }
+                                }
 
                                 // Hide loading indicator
                                 Navigator.pop(context);
@@ -697,13 +814,14 @@ class _CourseDetailPageState extends State<CourseDetailPage>
                                 // Show success message
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Subscription successful!'),
+                                    content: Text(
+                                        'Please complete your payment in the browser'),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
 
-                                // Navigate back or to a success page
-                                Navigator.pop(context);
+                                // Don't navigate back immediately
+                                // Navigator.pop(context);
                               } catch (e) {
                                 // Hide loading indicator
                                 Navigator.pop(context);

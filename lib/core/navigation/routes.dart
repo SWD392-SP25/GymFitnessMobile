@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gym_fitness_mobile/features/payment/presentation/success.dart';
 import 'package:gym_fitness_mobile/features/appointment/presentation/pages/appointment.dart';
 import 'package:gym_fitness_mobile/features/home/presentation/pages/homepage.dart';
 import 'package:gym_fitness_mobile/features/course/presentation/pages/coursepage.dart';
@@ -9,7 +10,8 @@ import '../screens/main_screen.dart';
 
 class AppRoutes {
   static const String welcome = '/welcome';
-  static const String mainScreen = '/mainScreen'; // Add route for MainScreen
+  static const String mainScreen = '/mainScreen';
+  static const String paymentSuccess = '/payment-success'; // Update the route name
   static const String home = '/home';
   static const String course = '/course';
   static const String chatbot = '/chatbot';
@@ -21,8 +23,13 @@ class AppRoutes {
     switch (settings.name) {
       case welcome:
         return MaterialPageRoute(builder: (_) => Welcome());
-      case mainScreen: // MainScreen route
-        return MaterialPageRoute(builder: (_) => MainScreen()); // Add MainScreen here
+      case mainScreen:
+        return MaterialPageRoute(builder: (_) => MainScreen());
+      case paymentSuccess:
+        return MaterialPageRoute(
+          builder: (_) => const PaymentSuccessPage(),
+          settings: settings, // Add settings
+        );
       case home:
         return MaterialPageRoute(builder: (_) => HomePage());
       case course:
@@ -38,7 +45,7 @@ class AppRoutes {
       default:
         return MaterialPageRoute(
             builder: (_) => const Scaffold(
-              body: Center(child: Text('Page not found')),
+              body: Center(child: Text('Không tìm thấy trang')),
             ));
     }
   }

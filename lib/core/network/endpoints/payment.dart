@@ -5,6 +5,7 @@ import '../dio_exceptions.dart';
 class PaymentEndpoints {
   static const String basePath = '/Payment';
   static const String subscribe = '$basePath/subscribe';
+  static const String executePayment = '$basePath/execute-payment';
 }
 
 class SubscriptionRequest {
@@ -32,7 +33,27 @@ class PaymentApiService {
 
   PaymentApiService(this._dioClient);
 
-  Future<void> subscribe(SubscriptionRequest request) async {
+  Future<String> executePayment({
+    required String paymentId,
+    required String payerId,
+    required String subscriptionId,
+  }) async {
+    try {
+      final response = await _dioClient.post(
+        '${PaymentEndpoints.executePayment}?paymentId=$paymentId&payerId=$payerId&subscriptionId=$subscriptionId',
+      );
+      
+      if (response.data is Map) {
+        return response.data['message'] ?? 'Payment executed successfully';
+      }
+      return response.data.toString();
+    } catch (e) {
+      print('Error executing payment: $e');
+      throw e;
+    }
+  }
+
+  Future<Map<String, dynamic>> subscribe(SubscriptionRequest request) async {
     try {
       final response = await _dioClient.post(
         PaymentEndpoints.subscribe,
