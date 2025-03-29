@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart'; // Add this import
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:gym_fitness_mobile/features/account/presentation/pages/subscription_plan_page.dart';
 
 import '../../../../core/auth/auth_provider.dart';
 
@@ -132,13 +131,7 @@ class AccountPage extends ConsumerWidget {
             child: ListView(
               children: [
                 if (isLoggedIn) ...[
-                  _buildListTile(Icons.book, "My Courses", () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SubscriptionPlanPage()),
-                    );
-                  }),
+                  _buildListTile(Icons.book, "My Courses", () {}),
                   _buildListTile(Icons.edit, "Edit Account", () {}),
                   _buildListTile(Icons.settings, "Settings and Privacy", () {}),
                   const Divider(thickness: 1),
