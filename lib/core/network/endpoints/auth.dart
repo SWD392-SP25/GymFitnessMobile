@@ -89,8 +89,10 @@ Future<AuthResponse> login(String firebaseToken) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('idToken', firebaseToken);
     await prefs.setString('userId', authResponse.id);
+    await prefs.setString('userEmail', authResponse.email);
     
     print("👤 User ID stored: ${authResponse.id}");
+    print("📧 User Email stored: ${authResponse.email}");
 
     return authResponse;
   } on DioException catch (e) {

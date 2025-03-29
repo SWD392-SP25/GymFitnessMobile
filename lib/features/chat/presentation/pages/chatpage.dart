@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gym_fitness_mobile/core/network/dio_client.dart';
 import 'package:gym_fitness_mobile/core/network/endpoints/chat_api_service.dart';
-import 'package:dio/dio.dart'; // Add this import
 import 'package:gym_fitness_mobile/core/network/endpoints/staff_api_service.dart'; // Add this import
-import 'dart:convert'; // Để sử dụng json, utf8, base64Url
 import 'package:shared_preferences/shared_preferences.dart'; // Để sử dụng SharedPreferences
 
 

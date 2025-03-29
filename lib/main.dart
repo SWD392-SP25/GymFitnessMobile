@@ -100,8 +100,17 @@ void handleDeepLink(Uri uri) {
     final paymentId = uri.queryParameters['paymentId'];
     print('💳 Payment ID: $paymentId');
     
-    // Use pushNamed instead of pushReplacementNamed
-    navigatorKey.currentState?.pushNamed(AppRoutes.paymentSuccess);
+    // Ensure we're using the correct navigator and waiting for the app to be ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (navigatorKey.currentState != null) {
+        navigatorKey.currentState!.pushNamedAndRemoveUntil(
+          AppRoutes.paymentSuccess,
+          (route) => false, // This will clear all previous routes
+        );
+      } else {
+        print('❌ Navigator not ready');
+      }
+    });
   }
 }
 
@@ -120,10 +129,6 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: AppRoutes.welcome,
       onGenerateRoute: AppRoutes.generateRoute,
-      // Add routes map
-      routes: {
-        AppRoutes.paymentSuccess: (context) => const PaymentSuccessPage(),
-      },
     );
   }
 }

@@ -164,12 +164,12 @@ class WorkoutPlan {
   factory WorkoutPlan.fromJson(Map<String, dynamic> json) {
     return WorkoutPlan(
       planId: json['planId'] ?? -1,
-      name: json['planName'] ?? 'Unknown Plan', // ✅ Đổi từ 'name' -> 'planName'
-      description: json['plantDescription'] ??
+      name: json['name'] ?? 'Unknown Plan', // ✅ Đổi từ 'name' -> 'planName'
+      description: json['description'] ??
           'No description available', // ✅ Đổi từ 'description' -> 'plantDescription'
       difficultyLevel: json['difficultyLevel'] ?? -1,
       durationWeeks: json['durationWeeks'] ?? -1,
-      createdBy: json['staffEmail'] ??
+      createdBy: json['createdBy'] ??
           'Unknown', // ✅ Vì 'createdBy' không có, dùng 'staffEmail' thay thế
       targetAudience: json['targetAudience'] ?? 'General Audience',
       goals: json['goals'] ?? 'No goals specified',

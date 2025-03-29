@@ -4,7 +4,6 @@ import 'package:gym_fitness_mobile/features/home/presentation/pages/homepage.dar
 import 'package:gym_fitness_mobile/features/course/presentation/pages/coursepage.dart';
 import 'package:gym_fitness_mobile/features/chat/presentation/pages/chatpage.dart';
 import 'package:gym_fitness_mobile/features/account/presentation/pages/accountpage.dart';
-import 'package:gym_fitness_mobile/features/payment/presentation/success.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -17,7 +16,6 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomePage(),
     CoursePage(),
-    ChatbotPage(),
     AppointmentPage(),
     ChatPage(),
     AccountPage(),
@@ -65,16 +63,12 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Course',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat),
-              label: 'GYMBOT',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.schedule),
               label: 'Appointment',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.group),
-              label: 'Meet PT',
+              icon: Icon(Icons.chat),
+              label: 'Chat PT',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.account_circle),
