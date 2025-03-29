@@ -22,8 +22,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  await dotenv.load();
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    // Load .env file
+    await dotenv.load(fileName: ".env");
+    print("🌐 .env loaded successfully");
+
+    // Verify the API_URL value
+    final apiUrl = dotenv.env['API_URL'];
+    print("🌐 API_URL from .env: '$apiUrl'");
+
+    if (apiUrl == null || apiUrl.isEmpty) {
+      print("❌ API_URL is missing or empty in .env file");
+    }
+  } catch (e) {
+    print("❌ Error loading .env file: $e");
+  }
 
   // Initialize app links
   final appLinks = AppLinks();
@@ -51,8 +66,14 @@ void main() async {
 
   try {
     // Load .env file
-    await dotenv.load(fileName: ".env");
-    print("🌐 .env loaded successfully");
+    try {
+      await dotenv.load(fileName: ".env");
+      print("🌐 .env loaded successfully");
+    } catch (e) {
+      print("❌ Error loading .env file: $e");
+      // Add fallback value
+      dotenv.env['API_URL'] = 'https://gymfitness.id.vn/api';
+    }
 
     // Verify the API_URL value
     final apiUrl = dotenv.env['API_URL'];

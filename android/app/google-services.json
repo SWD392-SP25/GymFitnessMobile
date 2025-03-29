@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "786640143654-pqqp64cv5aclqovqsr9pp4devp571618.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gym_fitness_mobile",
+            "certificate_hash": "c4b949d6a876032fd9c330422a74e807b6dbeeb8"
+          }
+        },
+        {
           "client_id": "786640143654-jqgk5prvvrpallam7gsquss8du4omvor.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -38,6 +46,13 @@
             {
               "client_id": "786640143654-h3atpn5o3lgenbku68ge189ps81064ei.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "786640143654-guhi0akc8m4261ggcnd8op751gcf4t6p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.gymFitnessMobile"
+              }
             }
           ]
         }
